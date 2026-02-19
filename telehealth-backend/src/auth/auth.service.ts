@@ -27,10 +27,19 @@ export class AuthService {
   async login(identifier: string, password: string) {
     const user = await this.validateUser(identifier, password);
 
+    let anonProfile = user.anonymousProfile;
+
+    if (user.role === 'STUDENT') {
+        anonProfile = await this.usersService.generateAnonymousProfile(
+        user.user_id,
+    );
+}
+
+
     const payload = {
       sub: user.user_id,
       role: user.role,
-      anon_id: user.anon_id ?? null,
+      anon_id: anonProfile?.anon_id || null,
       first_login: user.first_login,
     };
 
@@ -39,5 +48,7 @@ export class AuthService {
       first_login: user.first_login,
       role: user.role,
     };
+
+
   }
 }

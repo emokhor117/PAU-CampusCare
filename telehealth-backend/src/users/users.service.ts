@@ -1,44 +1,43 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { Role } from '../common/utils/roles.enum';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
-  private users = [
-    {
-      user_id: 1,
-      identifier: 'PAU/CSC/001',
-      password_hash: bcrypt.hashSync('password123', 10),
-      role: Role.STUDENT,
-      first_login: true,
-      anon_id: 'anon-abc-123',
-    },
-    {
-      user_id: 2,
-      identifier: 'STAFF/COUNS/01',
-      password_hash: bcrypt.hashSync('password123', 10),
-      role: Role.COUNSELLOR,
-      first_login: true,
-    },
-    {
-      user_id: 3,
-      identifier: 'ADMIN/01',
-      password_hash: bcrypt.hashSync('password123', 10),
-      role: Role.ADMIN,
-      first_login: true,
-    },
-  ];
+  constructor(private prisma: PrismaService) {}
 
   async findByIdentifier(identifier: string) {
-    return this.users.find(u => u.identifier === identifier);
+    return this.prisma.user.findUnique({
+      where: { identifier },
+      include: { anonymousProfile: true },
+    });
   }
 
   async updatePassword(user_id: number, newHash: string) {
-    const user = this.users.find(u => u.user_id === user_id);
-    if (user) {
-      user.password_hash = newHash;
-      user.first_login = false;
-    }
-    return user;
+    return this.prisma.user.update({
+      where: { user_id },
+      data: {
+        password_hash: newHash,
+        first_login: false,
+      },
+    });
+  }
+
+  async generateAnonymousProfile(user_id: number) {
+    const existing = await this.prisma.anonymousProfile.findUnique({
+      where: { user_id },
+    });
+
+    if (existing) return existing;
+
+    const alias =
+      'Student_' + Math.random().toString(36).substring(2, 7);
+
+    return this.prisma.anonymousProfile.create({
+      data: {
+        user_id,
+        display_name: alias,
+      },
+    });
   }
 }

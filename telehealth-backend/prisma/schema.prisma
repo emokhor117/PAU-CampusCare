@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  user_id          Int               @id @default(autoincrement())
+  identifier       String            @unique
+  password_hash    String
+  role             Role
+  first_login      Boolean           @default(true)
+  created_at       DateTime          @default(now())
+  anonymousProfile AnonymousProfile?
+}
+
+model AnonymousProfile {
+  anon_id      String   @id @default(uuid())
+  user_id      Int      @unique
+  display_name String
+  created_at   DateTime @default(now())
+  user         User     @relation(fields: [user_id], references: [user_id])
+}
+
+enum Role {
+  STUDENT
+  COUNSELLOR
+  ADMIN
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+}
+
+model Assessment {
+  assessment_id   Int       @id @default(autoincrement())
+  user_id         Int
+  assessment_type String
+  score           Int
+  risk_level      RiskLevel
+  submitted_at    DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [user_id])
+}
