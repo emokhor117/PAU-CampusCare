@@ -21,4 +21,13 @@ export class PrismaService
   async onModuleInit() {
     await this.$connect();
   }
+
+  async logAction(user_id: number, action: string) {
+  return this.auditLog.create({
+    data: {
+      user_id,
+      action,
+    },
+  });
+}
 }

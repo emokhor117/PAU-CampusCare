@@ -13,6 +13,7 @@ export class SessionsController {
   @Roles(Role.STUDENT)
   @Post('start')
   startSession(@Req() req) {
+    console.log('Starting session for anon_id:', req.user);
     const anon_id = req.user.anon_id;
     return this.sessionsService.createSession(anon_id);
   }
@@ -53,10 +54,25 @@ addNote(
   @Param('id') id: string,
   @Body('note_text') note_text: string,
 ) {
-  return this.sessionsService.addNote(
+  return (this.sessionsService as any).addNote(
     Number(id),
     req.user.sub,
     note_text,
+  );
+}
+//  crisis endpoint
+@UseGuards(JwtAuthGuard)
+@Roles(Role.COUNSELLOR)
+@Post(':id/crisis')
+flagCrisis(
+  @Param('id') id: string,
+  @Body('risk_reason') risk_reason: string,
+  @Body('action_taken') action_taken: string,
+) {
+  return this.sessionsService.flagCrisis(
+    Number(id),
+    risk_reason,
+    action_taken,
   );
 }
 

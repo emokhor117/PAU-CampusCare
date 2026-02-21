@@ -1,71 +1,127 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { SessionStatus } from '@prisma/client';
 
 @Injectable()
 export class SessionsService {
-  private sessions: any[] = [];
+  constructor(private prisma: PrismaService) {}
 
-  createSession(anon_id: string, priority = false) {
-  const session = {
-    session_id: Date.now(),
-    anon_id,
-    counsellor_id: null,
-    session_type: 'TEXT',
-    status: 'PENDING',
-    priority,
-    started_at: new Date(),
-    ended_at: null,
-  };
+  async createSession(anon_id: string, is_priority = false) {
+    return this.prisma.session.create({
+      data: {
+        anon_id,
+        is_priority,
+      },
+    });
+  }
 
-  this.sessions.push(session);
-  return session;
-} 
+  async getMySessionsByAnon(anon_id: string) {
+    return this.prisma.session.findMany({
+      where: { anon_id },
+      orderBy: { started_at: 'desc' },
+    });
+  }
 
-private notes: any[] = [];
+  async getPendingSessions() {
+    return this.prisma.session.findMany({
+      where: { status: SessionStatus.PENDING },
+      orderBy: [
+        { is_priority: 'desc' },
+        { started_at: 'asc' },
+      ],
+    });
+  }
 
-addNote(session_id: number, counsellor_id: number, note_text: string) {
-  const note = {
-    note_id: Date.now(),
-    session_id,
+  async acceptSession(session_id: number, counsellor_id: number) {
+  const session = await this.prisma.session.update({
+    where: { session_id },
+    data: {
+      counsellor_id,
+      status: 'ACTIVE',
+    },
+  });
+
+  
+  await this.prisma.logAction(
     counsellor_id,
-    note_text,
-    created_at: new Date(),
-  };
+    `Accepted session ${session_id}`,
+  );
 
-  this.notes.push(note);
-  return note;
+  return session;
 }
 
-  getPendingSessions() {
-  return this.sessions
-    .filter(s => s.status === 'PENDING')
-    .sort((a, b) => Number(b.priority) - Number(a.priority));
+  async addNote(
+  session_id: number,
+  counsellor_id: number,
+  note_text: string,
+) {
+  return this.prisma.sessionNote.create({
+    data: {
+      session_id,
+      counsellor_id,
+      note_text,
+    },
+  });
 }
 
+async flagCrisis(
+  session_id: number,
+  risk_reason: string,
+  action_taken: string,
+) {
+  // 1️⃣ Fetch session to get counsellor_id for audit log
+  const session = await this.prisma.session.findUnique({
+    where: { session_id },
+  });
 
-  acceptSession(session_id: number, counsellor_id: number) {
-    const session = this.sessions.find(s => s.session_id === session_id);
-    if (!session) return null;
-
-    session.status = 'ACTIVE';
-    session.counsellor_id = counsellor_id;
-    return session;
+  if (!session) {
+    throw new Error('Session not found');
   }
 
-  closeSession(session_id: number) {
-    const session = this.sessions.find(s => s.session_id === session_id);
-    if (!session) return null;
+  // 2️⃣ Update session status → ESCALATED
+  await this.prisma.session.update({
+    where: { session_id },
+    data: {
+      status: 'ESCALATED',
+    },
+  });
 
-    session.status = 'CLOSED';
-    session.ended_at = new Date();
-    return session;
+  // 3️⃣ Create crisis case record
+  const crisis = await this.prisma.crisisCase.create({
+    data: {
+      session_id,
+      risk_reason,
+      action_taken,
+    },
+  });
+
+  // 4️⃣ Write audit log (only if counsellor exists)
+  if (session.counsellor_id) {
+    await this.prisma.logAction(
+      session.counsellor_id,
+      `Flagged crisis for session ${session_id}`,
+    );
   }
 
-  getMySessionsByAnon(anon_id: string) {
-    return this.sessions.filter(s => s.anon_id === anon_id);
-  }
-
-  getMySessionsByCounsellor(counsellor_id: number) {
-    return this.sessions.filter(s => s.counsellor_id === counsellor_id);
-  }
+  return crisis;
 }
 
+  async closeSession(session_id: number) {
+  const session = await this.prisma.session.update({
+    where: { session_id },
+    data: {
+      status: 'CLOSED',
+      ended_at: new Date(),
+    },
+  });
+
+  if (session.counsellor_id) {
+    await this.prisma.logAction(
+      session.counsellor_id,
+      `Closed session ${session_id}`,
+    );
+  }
+
+  return session;
+}
+}

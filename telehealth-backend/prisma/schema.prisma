@@ -13,7 +13,13 @@ model User {
   role             Role
   first_login      Boolean           @default(true)
   created_at       DateTime          @default(now())
+
   anonymousProfile AnonymousProfile?
+  assessments      Assessment[]
+  assignedSessions Session[] @relation("CounsellorSessions")
+  sessionNotes     SessionNote[]
+  auditlogs        AuditLog[]
+
 }
 
 model AnonymousProfile {
@@ -43,6 +49,65 @@ model Assessment {
   score           Int
   risk_level      RiskLevel
   submitted_at    DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+enum SessionStatus {
+  PENDING
+  ACTIVE
+  CLOSED
+  ESCALATED
+}
+
+enum SessionType {
+  TEXT
+  VOICE
+  VIDEO
+  IN_PERSON
+}
+
+model Session {
+  session_id    Int           @id @default(autoincrement())
+  anon_id       String
+  counsellor_id Int?
+  session_type  SessionType   @default(TEXT)
+  status        SessionStatus @default(PENDING)
+  is_priority   Boolean       @default(false)
+  started_at    DateTime      @default(now())
+  ended_at      DateTime?
+
+  counsellor User? @relation("CounsellorSessions", fields: [counsellor_id], references: [user_id])
+  notes          SessionNote[]
+  crisisCases   CrisisCase[]
+}
+
+model SessionNote {
+  note_id       Int      @id @default(autoincrement())
+  session_id    Int
+  counsellor_id Int
+  note_text     String
+  created_at    DateTime @default(now())
+
+  session    Session @relation(fields: [session_id], references: [session_id])
+  counsellor User    @relation(fields: [counsellor_id], references: [user_id])
+}
+
+model CrisisCase {
+  crisis_id     Int      @id @default(autoincrement())
+  session_id    Int
+  risk_reason   String
+  action_taken  String
+  reported_at   DateTime @default(now())
+
+  session Session @relation(fields: [session_id], references: [session_id])
+}
+
+model AuditLog {
+  log_id    Int      @id @default(autoincrement())
+  user_id   Int
+  action    String
+  timestamp DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [user_id])
 }
