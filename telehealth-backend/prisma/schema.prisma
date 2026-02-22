@@ -13,12 +13,17 @@ model User {
   role             Role
   first_login      Boolean           @default(true)
   created_at       DateTime          @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  account_status   String            @default("ACTIVE")
 
   anonymousProfile AnonymousProfile?
   assessments      Assessment[]
   assignedSessions Session[] @relation("CounsellorSessions")
   sessionNotes     SessionNote[]
   auditlogs        AuditLog[]
+  createdResources Resource[]
+  student          Student?
+  staff            Staff?
 
 }
 
@@ -32,6 +37,11 @@ model AnonymousProfile {
 
 enum Role {
   STUDENT
+  COUNSELLOR
+  ADMIN
+}
+
+enum RoleType {
   COUNSELLOR
   ADMIN
 }
@@ -80,6 +90,7 @@ model Session {
   counsellor User? @relation("CounsellorSessions", fields: [counsellor_id], references: [user_id])
   notes          SessionNote[]
   crisisCases   CrisisCase[]
+  messages      Message[]
 }
 
 model SessionNote {
@@ -110,4 +121,52 @@ model AuditLog {
   timestamp DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Resource {
+  resource_id Int      @id @default(autoincrement())
+  title       String
+  category    String
+  content_url String
+  created_by  Int
+  created_at  DateTime @default(now())
+
+  admin User @relation(fields: [created_by], references: [user_id])
+}
+
+model Student {
+  student_id   Int    @id @default(autoincrement())
+  user_id      Int    @unique
+  matric_number String @unique
+  email        String @unique
+  department   String
+  level        String
+
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Staff {
+  staff_id     Int    @id @default(autoincrement())
+  user_id      Int    @unique
+  staff_number String @unique
+  role_type    RoleType
+  department   String
+  email        String @unique
+
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Message {
+  message_id      Int      @id @default(autoincrement())
+  session_id      Int
+  sender_type     SenderType
+  message_content String   // encrypted text
+  sent_at         DateTime @default(now())
+
+  session Session @relation(fields: [session_id], references: [session_id])
+}
+
+enum SenderType {
+  STUDENT
+  COUNSELLOR
 }
