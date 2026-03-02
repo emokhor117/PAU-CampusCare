@@ -91,6 +91,8 @@ model Session {
   notes          SessionNote[]
   crisisCases   CrisisCase[]
   messages      Message[]
+  appointments  Appointment[]
+  feedbacks     Feedback[]
 }
 
 model SessionNote {
@@ -169,4 +171,36 @@ model Message {
 enum SenderType {
   STUDENT
   COUNSELLOR
+}
+
+model Appointment {
+  appointment_id   Int              @id @default(autoincrement())
+  session_id       Int
+  appointment_type AppointmentType
+  scheduled_time   DateTime
+  status           AppointmentStatus @default(SCHEDULED)
+
+  session Session @relation(fields: [session_id], references: [session_id])
+}
+
+enum AppointmentType {
+  VOICE
+  VIDEO
+  IN_PERSON
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model Feedback {
+  feedback_id  Int      @id @default(autoincrement())
+  session_id   Int
+  rating       Int
+  comments     String?
+  submitted_at DateTime @default(now())
+
+  session Session @relation(fields: [session_id], references: [session_id])
 }
