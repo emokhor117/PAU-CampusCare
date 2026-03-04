@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SessionStatus } from '@prisma/client';
 
@@ -21,6 +21,16 @@ export class SessionsService {
       orderBy: { started_at: 'desc' },
     });
   }
+
+  async getSessionById(session_id: number, counsellor_id: number) {
+  const session = await this.prisma.session.findUnique({
+    where: { session_id },
+  });
+  if (!session) throw new ForbiddenException('Session not found');
+  if (session.counsellor_id !== counsellor_id)
+    throw new ForbiddenException('Not your session');
+  return session;
+}
 
   async getPendingSessions() {
     return this.prisma.session.findMany({

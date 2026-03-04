@@ -34,6 +34,14 @@ export class SessionsController {
     return this.sessionsService.getPendingSessions();
   }
 
+  // Counsellor fetches a single session by ID
+@UseGuards(JwtAuthGuard)
+@Roles(Role.COUNSELLOR)
+@Get(':id')
+getSession(@Param('id') id: string, @Req() req) {
+  return this.sessionsService.getSessionById(Number(id), req.user.sub);
+}
+
   // Counsellor accepts a session
   @UseGuards(JwtAuthGuard)
   @Roles(Role.COUNSELLOR)

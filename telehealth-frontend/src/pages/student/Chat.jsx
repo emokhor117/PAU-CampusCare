@@ -6,7 +6,7 @@ import { StudentSidebar } from './Dashboard'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faComments, faPaperPlane, faSpinner, faPlus,
-  faCircleDot, faLock, faChevronRight, faCalendarDays
+  faCircleDot, faLock, faCalendarDays
 } from '@fortawesome/free-solid-svg-icons'
 
 // ── Status badge ─────────────────────────────────────────────────────────────
@@ -26,10 +26,10 @@ function StatusBadge({ status }) {
 
 // ── Feedback modal ────────────────────────────────────────────────────────────
 function FeedbackModal({ sessionId, onClose, onSubmitted }) {
-  const [rating, setRating] = useState(0)
+  const [rating, setRating]     = useState(0)
   const [comments, setComments] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
 
   const handleSubmit = async () => {
     if (rating === 0) { setError('Please select a rating.'); return }
@@ -73,9 +73,7 @@ function FeedbackModal({ sessionId, onClose, onSubmitted }) {
           className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-800 focus:outline-none focus:border-[#003D8F] resize-none mb-4"
         />
 
-        {error && (
-          <p className="text-xs text-red-500 mb-3">{error}</p>
-        )}
+        {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
         <div className="flex gap-3">
           <button
@@ -99,9 +97,9 @@ function FeedbackModal({ sessionId, onClose, onSubmitted }) {
 
 // ── Appointment modal ─────────────────────────────────────────────────────────
 function AppointmentModal({ sessionId, onClose, onBooked }) {
-  const [type, setType] = useState('VOICE')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
+  const [type, setType]   = useState('VOICE')
+  const [date, setDate]   = useState('')
+  const [time, setTime]   = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -125,7 +123,6 @@ function AppointmentModal({ sessionId, onClose, onBooked }) {
         <h3 className="text-lg font-bold text-gray-800 mb-1">Book an Appointment</h3>
         <p className="text-sm text-gray-400 mb-6">Escalate this session to a voice, video, or in-person meeting.</p>
 
-        {/* Type selector */}
         <div className="flex gap-2 mb-5">
           {['VOICE', 'VIDEO', 'IN_PERSON'].map(t => (
             <button
@@ -188,34 +185,36 @@ function AppointmentModal({ sessionId, onClose, onBooked }) {
 
 // ── Main Chat page ────────────────────────────────────────────────────────────
 export default function StudentChat() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const { sessionId } = useParams()
+  const { user }                          = useAuth()
+  const navigate                          = useNavigate()
+  const { sessionId }                     = useParams()
 
-  const [sessions, setSessions]             = useState([])
-  const [activeSession, setActiveSession]   = useState(null)
-  const [messages, setMessages]             = useState([])
-  const [newMessage, setNewMessage]         = useState('')
-  const [loadingSessions, setLoadingSessions] = useState(true)
-  const [loadingMessages, setLoadingMessages] = useState(false)
-  const [sending, setSending]               = useState(false)
-  const [starting, setStarting]             = useState(false)
-  const [error, setError]                   = useState('')
-  const [showFeedback, setShowFeedback]     = useState(false)
-  const [showAppointment, setShowAppointment] = useState(false)
+  const [sessions, setSessions]                   = useState([])
+  const [activeSession, setActiveSession]         = useState(null)
+  const [messages, setMessages]                   = useState([])
+  const [newMessage, setNewMessage]               = useState('')
+  const [loadingSessions, setLoadingSessions]     = useState(true)
+  const [loadingMessages, setLoadingMessages]     = useState(false)
+  const [sending, setSending]                     = useState(false)
+  const [starting, setStarting]                   = useState(false)
+  const [closing, setClosing]                     = useState(false)
+  const [error, setError]                         = useState('')
+  const [showFeedback, setShowFeedback]           = useState(false)
+  const [showAppointment, setShowAppointment]     = useState(false)
   const [feedbackSessionId, setFeedbackSessionId] = useState(null)
 
   const messagesEndRef = useRef(null)
   const pollRef        = useRef(null)
 
-  // ── Scroll to bottom on new messages ─────────────────────────────────────
+  // ── Scroll to bottom ──────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ── Fetch all sessions ────────────────────────────────────────────────────
+  // ── Fetch sessions on mount ───────────────────────────────────────────────
   useEffect(() => {
     fetchSessions()
+    return () => clearInterval(pollRef.current)
   }, [])
 
   const fetchSessions = async () => {
@@ -223,14 +222,14 @@ export default function StudentChat() {
       const res = await api.get('/sessions/my')
       setSessions(res.data)
       return res.data
-    } catch (err) {
+    } catch {
       setError('Failed to load sessions.')
     } finally {
       setLoadingSessions(false)
     }
   }
 
-  // ── Auto-select session from URL param ────────────────────────────────────
+  // ── Auto-select from URL param ────────────────────────────────────────────
   useEffect(() => {
     if (sessionId && sessions.length > 0) {
       const found = sessions.find(s => s.session_id === Number(sessionId))
@@ -238,47 +237,61 @@ export default function StudentChat() {
     }
   }, [sessionId, sessions])
 
-  // ── Select a session and load its messages ────────────────────────────────
+  // ── Select session ────────────────────────────────────────────────────────
   const selectSession = async (session) => {
+    clearInterval(pollRef.current)
     setActiveSession(session)
     setMessages([])
     setError('')
-    if (session.status === 'ACTIVE' || session.status === 'CLOSED' || session.status === 'ESCALATED') {
+    if (['ACTIVE', 'CLOSED', 'ESCALATED'].includes(session.status)) {
       await loadMessages(session.session_id)
-      // Poll for new messages every 4s if active
       if (session.status === 'ACTIVE') startPolling(session.session_id)
     }
   }
 
-  // ── Load messages for a session ───────────────────────────────────────────
+  // ── Load messages ─────────────────────────────────────────────────────────
   const loadMessages = async (sid) => {
     setLoadingMessages(true)
     try {
       const res = await api.get(`/messages/${sid}`)
       setMessages(res.data)
-    } catch (err) {
+    } catch {
       setError('Failed to load messages.')
     } finally {
       setLoadingMessages(false)
     }
   }
 
-  // ── Polling for active sessions ───────────────────────────────────────────
-  const startPolling = (sid) => {
-    clearInterval(pollRef.current)
-    pollRef.current = setInterval(async () => {
-      try {
-        const res = await api.get(`/messages/${sid}`)
-        setMessages(res.data)
-      } catch {}
-    }, 4000)
-  }
+  // ── Polling ───────────────────────────────────────────────────────────────
+const startPolling = (sid) => {
+  clearInterval(pollRef.current)
+  pollRef.current = setInterval(async () => {
+    try {
+      const res = await api.get(`/messages/${sid}`)
+      setMessages(res.data)
 
-  useEffect(() => {
-    return () => clearInterval(pollRef.current)
-  }, [])
+      // Also re-fetch sessions to catch status changes made by the counsellor
+      const sessRes = await api.get('/sessions/my')
+      setSessions(sessRes.data)
+      const updated = sessRes.data.find(s => s.session_id === sid)
+      if (updated) {
+        setActiveSession(updated)
+        // If counsellor closed the session, stop polling and prompt feedback
+        if (updated.status === 'CLOSED') {
+          clearInterval(pollRef.current)
+          setFeedbackSessionId(sid)
+          setShowFeedback(true)
+        }
+        // If counsellor escalated, stop polling
+        if (updated.status === 'ESCALATED') {
+          clearInterval(pollRef.current)
+        }
+      }
+    } catch {}
+  }, 4000)
+}
 
-  // ── Start a new session ───────────────────────────────────────────────────
+  // ── Start new session ─────────────────────────────────────────────────────
   const handleStartSession = async () => {
     setStarting(true)
     setError('')
@@ -294,7 +307,7 @@ export default function StudentChat() {
     }
   }
 
-  // ── Send a message ────────────────────────────────────────────────────────
+  // ── Send message ──────────────────────────────────────────────────────────
   const handleSend = async () => {
     if (!newMessage.trim() || !activeSession) return
     setSending(true)
@@ -309,6 +322,29 @@ export default function StudentChat() {
     }
   }
 
+  // ── Close session ─────────────────────────────────────────────────────────
+  const handleCloseSession = async () => {
+    setClosing(true)
+    setError('')
+    try {
+      await api.post(`/sessions/${activeSession.session_id}/close`)
+      clearInterval(pollRef.current)
+      // Update locally
+      const updated = { ...activeSession, status: 'CLOSED' }
+      setActiveSession(updated)
+      setSessions(prev =>
+        prev.map(s => s.session_id === activeSession.session_id ? updated : s)
+      )
+      // Prompt feedback immediately
+      setFeedbackSessionId(activeSession.session_id)
+      setShowFeedback(true)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to close session.')
+    } finally {
+      setClosing(false)
+    }
+  }
+
   // ── Feedback submitted ────────────────────────────────────────────────────
   const handleFeedbackSubmitted = () => {
     setShowFeedback(false)
@@ -319,8 +355,6 @@ export default function StudentChat() {
   // ── Appointment booked ────────────────────────────────────────────────────
   const handleAppointmentBooked = () => {
     setShowAppointment(false)
-    setError('')
-    // Show success inline
     setError('✓ Appointment booked successfully.')
     setTimeout(() => setError(''), 3000)
   }
@@ -329,10 +363,9 @@ export default function StudentChat() {
     <div className="flex min-h-screen bg-gray-50">
       <StudentSidebar active="/student/chat" />
 
-      {/* ── Page body ── */}
       <div className="flex-1 flex overflow-hidden" style={{ height: '100vh' }}>
 
-        {/* ── Sessions list panel ── */}
+        {/* ── Sessions list ── */}
         <div className="w-72 bg-white border-r border-gray-100 flex flex-col shrink-0">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h2 className="text-sm font-bold text-gray-800">My Sessions</h2>
@@ -349,7 +382,6 @@ export default function StudentChat() {
             </button>
           </div>
 
-          {/* Sessions list */}
           <div className="flex-1 overflow-y-auto">
             {loadingSessions ? (
               <div className="flex items-center justify-center h-32">
@@ -383,9 +415,7 @@ export default function StudentChat() {
                     session.status === 'ESCALATED' ? 'bg-red-400' : 'bg-gray-300'
                   }`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-700">
-                      Session #{session.session_id}
-                    </p>
+                    <p className="text-sm font-medium text-gray-700">Session #{session.session_id}</p>
                     <p className="text-xs text-gray-400 truncate">
                       {new Date(session.started_at).toLocaleDateString('en-GB', {
                         day: 'numeric', month: 'short', year: 'numeric'
@@ -402,7 +432,6 @@ export default function StudentChat() {
         {/* ── Chat panel ── */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* No session selected */}
           {!activeSession ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
               <FontAwesomeIcon icon={faComments} className="text-gray-200 text-5xl mb-4" />
@@ -427,17 +456,12 @@ export default function StudentChat() {
                     activeSession.status === 'ESCALATED' ? 'bg-red-400' : 'bg-gray-300'
                   }`} />
                   <div>
-                    <p className="text-sm font-bold text-gray-800">
-                      Session #{activeSession.session_id}
-                    </p>
+                    <p className="text-sm font-bold text-gray-800">Session #{activeSession.session_id}</p>
                     <p className="text-xs text-gray-400">
-                      {activeSession.status === 'PENDING'
-                        ? 'Waiting for a counsellor to accept...'
-                        : activeSession.status === 'ACTIVE'
-                        ? 'Session in progress'
-                        : activeSession.status === 'CLOSED'
-                        ? 'Session closed'
-                        : 'Session escalated'}
+                      {activeSession.status === 'PENDING'   ? 'Waiting for a counsellor to accept...' :
+                       activeSession.status === 'ACTIVE'    ? 'Session in progress' :
+                       activeSession.status === 'CLOSED'    ? 'Session closed' :
+                                                              'Session escalated'}
                     </p>
                   </div>
                 </div>
@@ -451,6 +475,18 @@ export default function StudentChat() {
                     >
                       <FontAwesomeIcon icon={faCalendarDays} />
                       Book Appointment
+                    </button>
+                  )}
+                  {activeSession.status === 'ACTIVE' && (
+                    <button
+                      onClick={handleCloseSession}
+                      disabled={closing}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 transition cursor-pointer disabled:opacity-60"
+                    >
+                      {closing
+                        ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                        : 'Close Session'
+                      }
                     </button>
                   )}
                   {activeSession.status === 'CLOSED' && (
@@ -482,7 +518,6 @@ export default function StudentChat() {
               {/* Messages area */}
               <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
 
-                {/* Pending state */}
                 {activeSession.status === 'PENDING' && (
                   <div className="flex flex-col items-center justify-center h-full text-center">
                     <div className="w-12 h-12 rounded-full bg-yellow-50 border border-yellow-200 flex items-center justify-center mb-3">
@@ -495,14 +530,12 @@ export default function StudentChat() {
                   </div>
                 )}
 
-                {/* Loading messages */}
                 {loadingMessages && (
                   <div className="flex items-center justify-center h-32">
                     <FontAwesomeIcon icon={faSpinner} className="animate-spin text-gray-300 text-xl" />
                   </div>
                 )}
 
-                {/* Message bubbles */}
                 {!loadingMessages && messages.map(msg => {
                   const isStudent = msg.sender_type === 'STUDENT'
                   return (
@@ -523,7 +556,6 @@ export default function StudentChat() {
                   )
                 })}
 
-                {/* Empty active session */}
                 {!loadingMessages && messages.length === 0 && activeSession.status === 'ACTIVE' && (
                   <div className="flex flex-col items-center justify-center h-full text-center">
                     <FontAwesomeIcon icon={faLock} className="text-gray-200 text-3xl mb-3" />
