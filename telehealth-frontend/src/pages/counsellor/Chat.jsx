@@ -189,10 +189,10 @@ export default function CounsellorChat() {
   }, [messages])
 
   useEffect(() => {
-    loadMessages()
-    startPolling()
-    return () => clearInterval(pollRef.current)
-  }, [sessionId])
+  loadMessages()
+  startPolling()
+  return () => clearInterval(pollRef.current)
+}, [sessionId])
 
   const loadMessages = async () => {
     try {
@@ -210,21 +210,21 @@ const startPolling = () => {
   clearInterval(pollRef.current)
   pollRef.current = setInterval(async () => {
     try {
-      const res = await api.get(`/messages/${sessionId}`)
-      setMessages(res.data)
-
-      // Check if student closed the session
-      const pendingRes = await api.get('/sessions/pending')
-      // Since counsellor can't fetch their active sessions directly,
-      // we detect closure by catching a 403 on the messages endpoint
-    } catch (err) {
-      // 403 means access was revoked — session was closed or escalated
-      if (err.response?.status === 403) {
+      const [msgRes, sessRes] = await Promise.all([
+        api.get(`/messages/${sessionId}`),
+        api.get(`/sessions/${sessionId}`),
+      ])
+      setMessages(msgRes.data)
+      const updatedSession = sessRes.data
+      if (updatedSession.status === 'CLOSED') {
         clearInterval(pollRef.current)
         setSuccess('The student has closed this session.')
         setTimeout(() => navigate('/counsellor/sessions'), 2000)
       }
-    }
+      if (updatedSession.status === 'ESCALATED') {
+        clearInterval(pollRef.current)
+      }
+    } catch {}
   }, 4000)
 }
 

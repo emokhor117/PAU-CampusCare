@@ -267,23 +267,22 @@ const startPolling = (sid) => {
   clearInterval(pollRef.current)
   pollRef.current = setInterval(async () => {
     try {
-      const res = await api.get(`/messages/${sid}`)
-      setMessages(res.data)
-
-      // Also re-fetch sessions to catch status changes made by the counsellor
-      const sessRes = await api.get('/sessions/my')
-      setSessions(sessRes.data)
-      const updated = sessRes.data.find(s => s.session_id === sid)
-      if (updated) {
-        setActiveSession(updated)
-        // If counsellor closed the session, stop polling and prompt feedback
-        if (updated.status === 'CLOSED') {
+      // Fetch messages and session status together
+      const [msgRes, sessRes] = await Promise.all([
+        api.get(`/messages/${sid}`),
+        api.get('/sessions/my'),
+      ])
+      setMessages(msgRes.data)
+      const updatedSession = sessRes.data.find(s => s.session_id === sid)
+      if (updatedSession) {
+        setSessions(sessRes.data)
+        setActiveSession(updatedSession)
+        if (updatedSession.status === 'CLOSED') {
           clearInterval(pollRef.current)
           setFeedbackSessionId(sid)
           setShowFeedback(true)
         }
-        // If counsellor escalated, stop polling
-        if (updated.status === 'ESCALATED') {
+        if (updatedSession.status === 'ESCALATED') {
           clearInterval(pollRef.current)
         }
       }
