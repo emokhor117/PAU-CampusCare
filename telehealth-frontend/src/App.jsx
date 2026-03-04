@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import PublicRoute from './components/PublicRoute'
 
 // Eagerly loaded (always needed)
 import Login from './pages/Login'
@@ -44,8 +45,12 @@ export default function App() {
           <Routes>
 
             {/* Public */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/login" element={
+  <PublicRoute>
+    <Login />
+  </PublicRoute>
+} />
+<Route path="/change-password" element={<ChangePassword />} />
 
             {/* Student */}
             <Route path="/student/dashboard" element={
