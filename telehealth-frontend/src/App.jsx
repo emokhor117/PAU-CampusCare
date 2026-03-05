@@ -16,6 +16,7 @@ const StudentAssessment    = lazy(() => import('./pages/student/Assessment'))
 const StudentResources     = lazy(() => import('./pages/student/Resources'))
 const StudentHistory       = lazy(() => import('./pages/student/History'))
 
+const Call = lazy(() => import('./pages/Call'))
 const CounsellorDashboard    = lazy(() => import('./pages/counsellor/Dashboard'))
 const CounsellorSessions     = lazy(() => import('./pages/counsellor/Sessions'))
 const CounsellorChat         = lazy(() => import('./pages/counsellor/Chat'))
@@ -51,6 +52,13 @@ export default function App() {
   </PublicRoute>
 } />
 <Route path="/change-password" element={<ChangePassword />} />
+{/* add this route for only counsellor and student */}
+<Route path="/call/:sessionId" element={
+  <ProtectedRoute roles={['STUDENT', 'COUNSELLOR']}>
+    <Call />
+  </ProtectedRoute>
+} />
+
 
             {/* Student */}
             <Route path="/student/dashboard" element={

@@ -7,7 +7,7 @@ import {
   faPaperPlane, faSpinner, faLock, faTriangleExclamation,
   faXmark, faFileLines, faCircleCheck
 } from '@fortawesome/free-solid-svg-icons'
-
+import { faVideo, faPhone } from '@fortawesome/free-solid-svg-icons'
 function StatusBadge({ status }) {
   const map = {
     ACTIVE:    'bg-green-50 text-green-600 border-green-200',
@@ -281,31 +281,45 @@ const startPolling = () => {
             <p className="text-xs text-gray-400">Active counselling session — messages are encrypted</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowNote(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#1a3a5c] hover:text-[#1a3a5c] transition cursor-pointer"
-            >
-              <FontAwesomeIcon icon={faFileLines} />
-              Add Note
-            </button>
-            <button
-              onClick={() => setShowCrisis(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-xs text-red-500 hover:bg-red-50 transition cursor-pointer"
-            >
-              <FontAwesomeIcon icon={faTriangleExclamation} />
-              Flag Crisis
-            </button>
-            <button
-              onClick={handleClose}
-              disabled={closing}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a3a5c] text-white text-xs font-semibold hover:bg-[#2a5a8c] transition disabled:opacity-60 cursor-pointer"
-            >
-              {closing
-                ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                : 'Close Session'
-              }
-            </button>
-          </div>
+  <button
+    onClick={() => navigate(`/call/${sessionId}?type=voice`)}
+    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition cursor-pointer"
+  >
+    <FontAwesomeIcon icon={faPhone} />
+    Voice
+  </button>
+  <button
+    onClick={() => navigate(`/call/${sessionId}?type=video`)}
+    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#1a3a5c] hover:text-[#1a3a5c] transition cursor-pointer"
+  >
+    <FontAwesomeIcon icon={faVideo} />
+    Video
+  </button>
+  <button
+    onClick={() => setShowNote(true)}
+    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#1a3a5c] hover:text-[#1a3a5c] transition cursor-pointer"
+  >
+    <FontAwesomeIcon icon={faFileLines} />
+    Add Note
+  </button>
+  <button
+    onClick={() => setShowCrisis(true)}
+    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-xs text-red-500 hover:bg-red-50 transition cursor-pointer"
+  >
+    <FontAwesomeIcon icon={faTriangleExclamation} />
+    Flag Crisis
+  </button>
+  <button
+    onClick={handleClose}
+    disabled={closing}
+    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a3a5c] text-white text-xs font-semibold hover:bg-[#2a5a8c] transition disabled:opacity-60 cursor-pointer"
+  >
+    {closing
+      ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+      : 'Close Session'
+    }
+  </button>
+</div>
         </div>
 
         {/* Alerts */}

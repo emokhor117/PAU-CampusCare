@@ -8,7 +8,7 @@ import {
   faComments, faPaperPlane, faSpinner, faPlus,
   faCircleDot, faLock, faCalendarDays
 } from '@fortawesome/free-solid-svg-icons'
-
+import { faVideo, faPhone } from '@fortawesome/free-solid-svg-icons'
 // ── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
   const map = {
@@ -466,28 +466,47 @@ const startPolling = (sid) => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-2">
-                  {activeSession.status === 'ACTIVE' && (
-                    <button
-                      onClick={() => setShowAppointment(true)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer"
-                    >
-                      <FontAwesomeIcon icon={faCalendarDays} />
-                      Book Appointment
-                    </button>
-                  )}
-                  {activeSession.status === 'ACTIVE' && (
-                    <button
-                      onClick={handleCloseSession}
-                      disabled={closing}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 transition cursor-pointer disabled:opacity-60"
-                    >
-                      {closing
-                        ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                        : 'Close Session'
-                      }
-                    </button>
-                  )}
+              {/* Action buttons */}
+<div className="flex items-center gap-2">
+  {activeSession.status === 'ACTIVE' && (
+    <button
+      onClick={() => navigate(`/call/${activeSession.session_id}?type=voice`)}
+      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition cursor-pointer"
+    >
+      <FontAwesomeIcon icon={faPhone} />
+      Voice
+    </button>
+  )}
+  {activeSession.status === 'ACTIVE' && (
+    <button
+      onClick={() => navigate(`/call/${activeSession.session_id}?type=video`)}
+      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer"
+    >
+      <FontAwesomeIcon icon={faVideo} />
+      Video
+    </button>
+  )}
+  {activeSession.status === 'ACTIVE' && (
+    <button
+      onClick={() => setShowAppointment(true)}
+      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer"
+    >
+      <FontAwesomeIcon icon={faCalendarDays} />
+      Book Appointment
+    </button>
+  )}
+  {activeSession.status === 'ACTIVE' && (
+    <button
+      onClick={handleCloseSession}
+      disabled={closing}
+      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 transition cursor-pointer disabled:opacity-60"
+    >
+      {closing
+        ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+        : 'Close Session'
+      }
+    </button>
+  )}
                   {activeSession.status === 'CLOSED' && (
                     <button
                       onClick={() => {
