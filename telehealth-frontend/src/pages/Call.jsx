@@ -52,11 +52,14 @@ export default function Call() {
     return `${url}?${params.toString()}`
   }
 
-  const handleLeave = () => {
-    const role = user?.role
-    if (role === 'STUDENT')    navigate(`/student/chat/${sessionId}`)
-    if (role === 'COUNSELLOR') navigate(`/counsellor/chat/${sessionId}`)
-  }
+ const handleLeave = async () => {
+  try {
+    await api.post(`/sessions/${sessionId}/type`, { session_type: 'TEXT' })
+  } catch {}
+  const role = user?.role
+  if (role === 'STUDENT')    navigate(`/student/chat/${sessionId}`)
+  if (role === 'COUNSELLOR') navigate(`/counsellor/chat/${sessionId}`)
+}
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col">

@@ -198,6 +198,7 @@ export default function StudentChat() {
   const [sending, setSending]                     = useState(false)
   const [starting, setStarting]                   = useState(false)
   const [closing, setClosing]                     = useState(false)
+  const [incomingCall, setIncomingCall] = useState(null)
   const [error, setError]                         = useState('')
   const [showFeedback, setShowFeedback]           = useState(false)
   const [showAppointment, setShowAppointment]     = useState(false)
@@ -277,6 +278,17 @@ const startPolling = (sid) => {
       if (updatedSession) {
         setSessions(sessRes.data)
         setActiveSession(updatedSession)
+        // Detect if other party started a call
+if (
+  updatedSession.status === 'ACTIVE' &&
+  (updatedSession.session_type === 'VOICE' || updatedSession.session_type === 'VIDEO')
+) {
+  setIncomingCall(updatedSession.session_type.toLowerCase())
+}
+// Reset if call ended
+if (updatedSession.session_type === 'TEXT') {
+  setIncomingCall(null)
+}
         if (updatedSession.status === 'CLOSED') {
           clearInterval(pollRef.current)
           setFeedbackSessionId(sid)
@@ -469,23 +481,29 @@ const startPolling = (sid) => {
               {/* Action buttons */}
 <div className="flex items-center gap-2">
   {activeSession.status === 'ACTIVE' && (
-    <button
-      onClick={() => navigate(`/call/${activeSession.session_id}?type=voice`)}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition cursor-pointer"
-    >
-      <FontAwesomeIcon icon={faPhone} />
-      Voice
-    </button>
-  )}
-  {activeSession.status === 'ACTIVE' && (
-    <button
-      onClick={() => navigate(`/call/${activeSession.session_id}?type=video`)}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer"
-    >
-      <FontAwesomeIcon icon={faVideo} />
-      Video
-    </button>
-  )}
+  <button
+    onClick={async () => {
+      await api.post(`/sessions/${activeSession.session_id}/type`, { session_type: 'VOICE' })
+      navigate(`/call/${activeSession.session_id}?type=voice`)
+    }}
+    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition cursor-pointer"
+  >
+    <FontAwesomeIcon icon={faPhone} />
+    Voice
+  </button>
+)}
+{activeSession.status === 'ACTIVE' && (
+  <button
+    onClick={async () => {
+      await api.post(`/sessions/${activeSession.session_id}/type`, { session_type: 'VIDEO' })
+      navigate(`/call/${activeSession.session_id}?type=video`)
+    }}
+    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer"
+  >
+    <FontAwesomeIcon icon={faVideo} />
+    Video
+  </button>
+)}
   {activeSession.status === 'ACTIVE' && (
     <button
       onClick={() => setShowAppointment(true)}
@@ -523,15 +541,35 @@ const startPolling = (sid) => {
               </div>
 
               {/* Error / success bar */}
-              {error && (
-                <div className={`mx-6 mt-3 px-4 py-2.5 rounded-lg text-xs ${
-                  error.startsWith('✓')
-                    ? 'bg-green-50 border border-green-200 text-green-600'
-                    : 'bg-red-50 border border-red-200 text-red-600'
-                }`}>
-                  {error}
+               {/* Incoming call banner */}
+            {incomingCall && (
+              <div className="mx-6 mt-3 px-4 py-3 rounded-lg bg-green-50 border border-green-200 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-green-700 text-sm">
+                  <FontAwesomeIcon icon={incomingCall === 'voice' ? faPhone : faVideo} className="animate-pulse" />
+                  <span className="font-semibold">
+                    {incomingCall === 'voice' ? 'Voice' : 'Video'} call in progress
+                  </span>
+                  <span className="text-green-500 text-xs">— your counsellor has started a call</span>
                 </div>
-              )}
+                <button
+                  onClick={() => navigate(`/call/${activeSession.session_id}?type=${incomingCall}`)}
+                  className="px-4 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition cursor-pointer"
+                >
+                  Join Now
+                </button>
+              </div>
+            )}
+
+            {/* Error / success bar */}
+            {error && (
+              <div className={`mx-6 mt-3 px-4 py-2.5 rounded-lg text-xs ${
+                error.startsWith('✓')
+                  ? 'bg-green-50 border border-green-200 text-green-600'
+                  : 'bg-red-50 border border-red-200 text-red-600'
+              }`}>
+                {error}
+              </div>
+            )}
 
               {/* Messages area */}
               <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">

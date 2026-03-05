@@ -27,6 +27,7 @@ function CrisisModal({ sessionId, onClose, onEscalated }) {
   const [actionTaken, setActionTaken]   = useState('')
   const [loading, setLoading]           = useState(false)
   const [error, setError]               = useState('')
+  
 
   const handleSubmit = async () => {
     if (!riskReason.trim() || !actionTaken.trim()) {
@@ -170,17 +171,17 @@ export default function CounsellorChat() {
   const { sessionId } = useParams()
   const navigate      = useNavigate()
 
-  const [messages, setMessages]         = useState([])
-  const [session, setSession]           = useState(null)
-  const [newMessage, setNewMessage]     = useState('')
-  const [loading, setLoading]           = useState(true)
-  const [sending, setSending]           = useState(false)
-  const [closing, setClosing]           = useState(false)
-  const [showCrisis, setShowCrisis]     = useState(false)
-  const [showNote, setShowNote]         = useState(false)
-  const [error, setError]               = useState('')
-  const [success, setSuccess]           = useState('')
-
+const [messages, setMessages]         = useState([])
+const [session, setSession]           = useState(null)
+const [newMessage, setNewMessage]     = useState('')
+const [loading, setLoading]           = useState(true)
+const [sending, setSending]           = useState(false)
+const [closing, setClosing]           = useState(false)
+const [incomingCall, setIncomingCall] = useState(null)   // ← add this
+const [showCrisis, setShowCrisis]     = useState(false)
+const [showNote, setShowNote]         = useState(false)
+const [error, setError]               = useState('')
+const [success, setSuccess]           = useState('')
   const messagesEndRef = useRef(null)
   const pollRef        = useRef(null)
 
@@ -321,6 +322,25 @@ const startPolling = () => {
   </button>
 </div>
         </div>
+
+        {/* Incoming call banner */}
+        {incomingCall && (
+          <div className="mx-6 mt-3 px-4 py-3 rounded-lg bg-green-50 border border-green-200 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-green-700 text-sm">
+              <FontAwesomeIcon icon={incomingCall === 'voice' ? faPhone : faVideo} className="animate-pulse" />
+              <span className="font-semibold">
+                {incomingCall === 'voice' ? 'Voice' : 'Video'} call in progress
+              </span>
+              <span className="text-green-500 text-xs">— your student has started a call</span>
+            </div>
+            <button
+              onClick={() => navigate(`/call/${sessionId}?type=${incomingCall}`)}
+              className="px-4 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition cursor-pointer"
+            >
+              Join Now
+            </button>
+          </div>
+        )}
 
         {/* Alerts */}
         {error && (

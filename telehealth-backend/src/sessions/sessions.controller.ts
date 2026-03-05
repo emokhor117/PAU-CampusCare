@@ -34,6 +34,16 @@ export class SessionsController {
     return this.sessionsService.getPendingSessions();
   }
 
+@UseGuards(JwtAuthGuard)
+@Roles(Role.STUDENT, Role.COUNSELLOR)
+@Post(':id/type')
+updateSessionType(
+  @Param('id') id: string,
+  @Body('session_type') session_type: string,
+) {
+  return this.sessionsService.updateSessionType(Number(id), session_type);
+}
+
   // Counsellor fetches a single session by ID
 @UseGuards(JwtAuthGuard)
 @Roles(Role.COUNSELLOR)

@@ -22,6 +22,13 @@ export class SessionsService {
     });
   }
 
+  async updateSessionType(session_id: number, session_type: string) {
+  return this.prisma.session.update({
+    where: { session_id },
+    data: { session_type: session_type as any },
+  });
+}
+
   async getSessionById(session_id: number, counsellor_id: number) {
   const session = await this.prisma.session.findUnique({
     where: { session_id },
@@ -49,6 +56,8 @@ export class SessionsService {
       counsellor_id,
       status: 'ACTIVE',
     },
+
+    
   });
 
   
