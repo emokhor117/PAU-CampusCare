@@ -50,6 +50,13 @@ export class SessionsService {
     });
   }
 
+  async getMyCounsellorSessions(counsellor_id: number) {
+  return this.prisma.session.findMany({
+    where: { counsellor_id },
+    orderBy: { started_at: 'desc' },
+  });
+}
+
   async acceptSession(session_id: number, counsellor_id: number) {
   const session = await this.prisma.session.update({
     where: { session_id },

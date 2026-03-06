@@ -300,20 +300,32 @@ if (
             <p className="text-xs text-gray-400">Active counselling session — messages are encrypted</p>
           </div>
           <div className="flex items-center gap-2">
-  <button
-    onClick={() => navigate(`/call/${sessionId}?type=voice`)}
-    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition cursor-pointer"
-  >
-    <FontAwesomeIcon icon={faPhone} />
-    Voice
-  </button>
-  <button
-    onClick={() => navigate(`/call/${sessionId}?type=video`)}
-    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#1a3a5c] hover:text-[#1a3a5c] transition cursor-pointer"
-  >
-    <FontAwesomeIcon icon={faVideo} />
-    Video
-  </button>
+ <button
+  onClick={async () => {
+    try {
+      await api.post(`/sessions/${sessionId}/type`, { session_type: 'VOICE' })
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch {}
+    navigate(`/call/${sessionId}?type=voice`)
+  }}
+  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition cursor-pointer"
+>
+  <FontAwesomeIcon icon={faPhone} />
+  Voice
+</button>
+<button
+  onClick={async () => {
+    try {
+      await api.post(`/sessions/${sessionId}/type`, { session_type: 'VIDEO' })
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch {}
+    navigate(`/call/${sessionId}?type=video`)
+  }}
+  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#1a3a5c] hover:text-[#1a3a5c] transition cursor-pointer"
+>
+  <FontAwesomeIcon icon={faVideo} />
+  Video
+</button>
   <button
     onClick={() => setShowNote(true)}
     className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#1a3a5c] hover:text-[#1a3a5c] transition cursor-pointer"

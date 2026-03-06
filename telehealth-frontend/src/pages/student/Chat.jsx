@@ -232,11 +232,14 @@ export default function StudentChat() {
 
   // ── Auto-select from URL param ────────────────────────────────────────────
   useEffect(() => {
-    if (sessionId && sessions.length > 0) {
+  if (sessionId && sessions.length > 0) {
+    // Only auto-select from URL param on first load, not on every sessions update
+    if (!activeSession) {
       const found = sessions.find(s => s.session_id === Number(sessionId))
       if (found) selectSession(found)
     }
-  }, [sessionId, sessions])
+  }
+}, [sessionId, sessions])
 
   // ── Select session ────────────────────────────────────────────────────────
   const selectSession = async (session) => {
@@ -277,8 +280,11 @@ const startPolling = (sid) => {
       const updatedSession = sessRes.data.find(s => s.session_id === sid)
       console.log('Poll - session_type:', updatedSession?.session_type, 'status:', updatedSession?.status)
       if (updatedSession) {
-        setSessions(sessRes.data)
-        setActiveSession(updatedSession)
+  setSessions(sessRes.data)
+  // Only update active session data if it's still the same session
+  setActiveSession(prev => 
+    prev?.session_id === updatedSession.session_id ? updatedSession : prev
+  )
         // Detect if other party started a call
 if (
   updatedSession.status === 'ACTIVE' &&
