@@ -275,6 +275,7 @@ const startPolling = (sid) => {
       ])
       setMessages(msgRes.data)
       const updatedSession = sessRes.data.find(s => s.session_id === sid)
+      console.log('Poll - session_type:', updatedSession?.session_type, 'status:', updatedSession?.status)
       if (updatedSession) {
         setSessions(sessRes.data)
         setActiveSession(updatedSession)
@@ -483,9 +484,13 @@ if (updatedSession.session_type === 'TEXT') {
   {activeSession.status === 'ACTIVE' && (
   <button
     onClick={async () => {
-      await api.post(`/sessions/${activeSession.session_id}/type`, { session_type: 'VOICE' })
-      navigate(`/call/${activeSession.session_id}?type=voice`)
-    }}
+  try {
+    await api.post(`/sessions/${activeSession.session_id}/type`, { session_type: 'VOICE' })
+    // Small delay so the other person's poll catches the update
+    await new Promise(resolve => setTimeout(resolve, 500))
+  } catch {}
+  navigate(`/call/${activeSession.session_id}?type=voice`)
+}}
     className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition cursor-pointer"
   >
     <FontAwesomeIcon icon={faPhone} />
@@ -495,9 +500,13 @@ if (updatedSession.session_type === 'TEXT') {
 {activeSession.status === 'ACTIVE' && (
   <button
     onClick={async () => {
-      await api.post(`/sessions/${activeSession.session_id}/type`, { session_type: 'VIDEO' })
-      navigate(`/call/${activeSession.session_id}?type=video`)
-    }}
+  try {
+    await api.post(`/sessions/${activeSession.session_id}/type`, { session_type: 'VOICE' })
+    // Small delay so the other person's poll catches the update
+    await new Promise(resolve => setTimeout(resolve, 500))
+  } catch {}
+  navigate(`/call/${activeSession.session_id}?type=voice`)
+}}
     className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer"
   >
     <FontAwesomeIcon icon={faVideo} />

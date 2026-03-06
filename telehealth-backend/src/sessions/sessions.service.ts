@@ -33,6 +33,7 @@ export class SessionsService {
   const session = await this.prisma.session.findUnique({
     where: { session_id },
   });
+ 
   if (!session) throw new ForbiddenException('Session not found');
   if (session.counsellor_id !== counsellor_id)
     throw new ForbiddenException('Not your session');

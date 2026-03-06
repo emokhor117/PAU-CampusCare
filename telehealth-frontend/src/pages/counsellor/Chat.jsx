@@ -170,6 +170,7 @@ function NoteModal({ sessionId, onClose, onSaved }) {
 export default function CounsellorChat() {
   const { sessionId } = useParams()
   const navigate      = useNavigate()
+  
 
 const [messages, setMessages]         = useState([])
 const [session, setSession]           = useState(null)
@@ -210,6 +211,7 @@ const [success, setSuccess]           = useState('')
 const startPolling = () => {
   clearInterval(pollRef.current)
   pollRef.current = setInterval(async () => {
+    
     try {
       const [msgRes, sessRes] = await Promise.all([
         api.get(`/messages/${sessionId}`),
@@ -217,6 +219,20 @@ const startPolling = () => {
       ])
       setMessages(msgRes.data)
       const updatedSession = sessRes.data
+
+
+if (
+  updatedSession.status === 'ACTIVE' &&
+  (updatedSession.session_type === 'VOICE' || updatedSession.session_type === 'VIDEO')
+) {
+
+  setIncomingCall(updatedSession.session_type.toLowerCase())
+}
+      // Reset if call ended
+      if (updatedSession.session_type === 'TEXT') {
+        setIncomingCall(null)
+      }
+
       if (updatedSession.status === 'CLOSED') {
         clearInterval(pollRef.current)
         setSuccess('The student has closed this session.')
@@ -225,7 +241,9 @@ const startPolling = () => {
       if (updatedSession.status === 'ESCALATED') {
         clearInterval(pollRef.current)
       }
-    } catch {}
+    } catch (err) {
+      
+    }
   }, 4000)
 }
 
