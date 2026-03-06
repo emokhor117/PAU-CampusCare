@@ -9,6 +9,7 @@ import {
   faTriangleExclamation, faCircleDot, faSpinner,
   faBars, faXmark, faUser
 } from '@fortawesome/free-solid-svg-icons'
+import pauLogo from '../../assets/images/pau logo.png'
 
 // ── Sidebar nav items ────────────────────────────────────────────────────────
 const NAV = [
@@ -36,7 +37,7 @@ export function StudentSidebar({ active }) {
         <div className="flex items-center justify-between mb-8">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <img src="/src/assets/images/pau logo.png" alt="PAU" className="w-8" />
+              <img src={pauLogo} alt="PAU" className="w-8" />
               <span className="text-white font-semibold text-sm">CampusCare</span>
             </div>
           )}

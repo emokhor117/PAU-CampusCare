@@ -10,6 +10,7 @@ import {
   faCircleCheck, faStar
 } from '@fortawesome/free-solid-svg-icons'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
+import pauLogo from '../../assets/images/pau logo.png'
 
 const NAV = [
   { label: 'Dashboard',  icon: faHouse,         path: '/admin/dashboard' },
@@ -29,7 +30,7 @@ export function AdminSidebar({ active }) {
         <div className="flex items-center justify-between mb-8">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <img src="/src/assets/images/pau logo.png" alt="PAU" className="w-8" />
+              <img src={pauLogo} alt="PAU" className="w-8" />
               <span className="text-white font-semibold text-sm">CampusCare</span>
             </div>
           )}

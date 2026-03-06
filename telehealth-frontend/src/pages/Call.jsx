@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faSpinner, faPhone, faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons'
+import pauLogo from '../assets/images/pau logo.png' 
 
 export default function Call() {
   const { sessionId }         = useParams()
@@ -67,7 +68,7 @@ export default function Call() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 bg-[#0f172a] border-b border-white/10">
         <div className="flex items-center gap-3">
-          <img src="/src/assets/images/pau logo.png" alt="PAU" className="w-7 opacity-80" />
+          <img src={pauLogo} alt="PAU" className="w-8" />
           <div>
             <p className="text-white text-sm font-semibold">PAU CampusCare</p>
             <p className="text-white/40 text-xs">

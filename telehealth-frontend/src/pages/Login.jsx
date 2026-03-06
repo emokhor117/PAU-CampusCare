@@ -14,6 +14,7 @@ import {
   faEye,
   faEyeSlash,
 } from '@fortawesome/free-solid-svg-icons'
+import pauLogo from '../assets/images/pau logo.png'
 
 
 export default function Login() {
@@ -63,7 +64,7 @@ export default function Login() {
           <div className="absolute -bottom-16 -left-16 w-60 h-60 rounded-full bg-[#00A878]/10" />
 
           <div className="relative z-10">
-            <img src="/src/assets/images/pau logo.png" alt="PAU Logo" className="w-20 mb-8" />
+            <img src={pauLogo} alt="PAU" className="w-8" />
             <h1 className="text-white text-4xl font-semibold leading-tight">
               PAU<br />CampusCare
             </h1>

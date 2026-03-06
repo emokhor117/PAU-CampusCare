@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faSpinner, faComments, faCircleDot, faInbox
 } from '@fortawesome/free-solid-svg-icons'
+import pauLogo from '../../assets/images/pau logo.png'
 
 function StatusBadge({ status }) {
   const map = {
@@ -108,6 +109,7 @@ export default function CounsellorSessions() {
 
       <main className="flex-1 p-6 md:p-10">
         <div className="mb-6">
+          <img src={pauLogo} alt="PAU" className="w-8" />
           <h1 className="text-2xl font-bold text-gray-800">Sessions</h1>
           <p className="text-sm text-gray-400 mt-0.5">Manage session requests and your session history</p>
         </div>
