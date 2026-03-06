@@ -18,7 +18,6 @@ const defaultCounsellorForm = { staff_number: '', email: '', password: '', depar
 
 export default function AdminUsers() {
   const [activeTab, setActiveTab] = useState('students')
-  const [users, setUsers] = useState({ students: [], counsellors: [] })
   const [students, setStudents] = useState([])
   const [counsellors, setCounsellors] = useState([])
   const [loading, setLoading] = useState(true)
@@ -72,7 +71,7 @@ const fetchUsers = async () => {
           setSubmitting(false)
           return
         }
-        await api.post('/users/students', studentForm)
+        await api.post('/users/student', studentForm)
         setFormSuccess('Student account created successfully.')
       } else {
         const { staff_number, email, password, department } = counsellorForm
@@ -81,7 +80,7 @@ const fetchUsers = async () => {
           setSubmitting(false)
           return
         }
-        await api.post('/users/counsellors', counsellorForm)
+        await api.post('/users/counsellor', counsellorForm)
         setFormSuccess('Counsellor account created successfully.')
       }
       fetchUsers()
@@ -101,23 +100,23 @@ const fetchUsers = async () => {
     } catch (e) { console.error(e) }
   }
 
-  const filteredStudents = users.students.filter((s) =>
-    s.matric_number?.toLowerCase().includes(search.toLowerCase()) ||
-    s.email?.toLowerCase().includes(search.toLowerCase()) ||
-    s.department?.toLowerCase().includes(search.toLowerCase())
-  )
-  const filteredCounsellors = users.counsellors.filter((c) =>
-    c.staff_number?.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase()) ||
-    c.department?.toLowerCase().includes(search.toLowerCase())
-  )
+const filteredStudents = students.filter((s) =>
+  s.matric_number?.toLowerCase().includes(search.toLowerCase()) ||
+  s.email?.toLowerCase().includes(search.toLowerCase()) ||
+  s.department?.toLowerCase().includes(search.toLowerCase())
+)
+const filteredCounsellors = counsellors.filter((c) =>
+  c.staff_number?.toLowerCase().includes(search.toLowerCase()) ||
+  c.email?.toLowerCase().includes(search.toLowerCase()) ||
+  c.department?.toLowerCase().includes(search.toLowerCase())
+)
 
-  const allUsers = [...users.students, ...users.counsellors]
-  const statsCards = [
-    { label: 'Total Students', value: users.students.length, icon: faUserGraduate, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100' },
-    { label: 'Total Counsellors', value: users.counsellors.length, icon: faUserTie, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { label: 'Active Accounts', value: allUsers.filter(u => u.account_status === 'ACTIVE').length, icon: faCircleCheck, color: 'text-violet-500', bg: 'bg-violet-50', border: 'border-violet-100' },
-  ]
+const allUsers = [...students, ...counsellors]
+const statsCards = [
+  { label: 'Total Students', value: students.length, icon: faUserGraduate, bg: 'bg-blue-50', color: 'text-blue-500', border: 'border-blue-100' },
+  { label: 'Total Counsellors', value: counsellors.length, icon: faUserTie, bg: 'bg-emerald-50', color: 'text-emerald-500', border: 'border-emerald-100' },
+  { label: 'Active Accounts', value: allUsers.filter(u => u.account_status === 'ACTIVE').length, icon: faCircleCheck, bg: 'bg-green-50', color: 'text-green-500', border: 'border-green-100' },
+]
 
   return (
     <div className="flex min-h-screen bg-gray-50">
