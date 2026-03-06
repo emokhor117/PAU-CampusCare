@@ -104,7 +104,7 @@ export default function Login() {
               <span className="text-[#003D8F] font-semibold text-lg">PAU CampusCare</span>
             </div>
 
-            <h2 className="text-3xl font-semibold text-gray-800">Welcome back</h2>
+            <h2 className="text-3xl font-semibold text-gray-800">Welcome </h2>
             <p className="text-sm text-gray-400 mt-1 mb-8">
               Sign in to access your counselling portal
             </p>

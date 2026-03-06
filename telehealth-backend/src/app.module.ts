@@ -10,9 +10,10 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { CallsModule } from './calls/calls.module';
+import { UsersModule } from './users/users.module';
 
 
 @Module({
-  imports: [PrismaModule, AuthModule, StudentsModule, AssessmentsModule, SessionsModule, ResourcesModule, MessagesModule, AppointmentsModule, FeedbackModule, AnalyticsModule, CallsModule]
+  imports: [PrismaModule, UsersModule, AuthModule, StudentsModule, AssessmentsModule, SessionsModule, ResourcesModule, MessagesModule, AppointmentsModule, FeedbackModule, AnalyticsModule, CallsModule]
 })
 export class AppModule {}
