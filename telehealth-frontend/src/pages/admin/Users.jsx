@@ -6,7 +6,7 @@ import {
   faXmark, faEye, faEyeSlash, faCircleCheck,
   faCircleXmark, faMagnifyingGlass, faShieldHalved,
 } from '@fortawesome/free-solid-svg-icons'
-import api from '../api/axiosInstance'
+import api from '../../api/axios'
 
 const DEPARTMENTS = [
   'Computer Science', 'Business Administration', 'Mass Communication',
@@ -19,6 +19,8 @@ const defaultCounsellorForm = { staff_number: '', email: '', password: '', depar
 export default function AdminUsers() {
   const [activeTab, setActiveTab] = useState('students')
   const [users, setUsers] = useState({ students: [], counsellors: [] })
+  const [students, setStudents] = useState([])
+  const [counsellors, setCounsellors] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -30,17 +32,21 @@ export default function AdminUsers() {
   const [formError, setFormError] = useState('')
   const [formSuccess, setFormSuccess] = useState('')
 
-  const fetchUsers = async () => {
-    setLoading(true)
-    try {
-      const res = await api.get('/users')
-      setUsers(res.data)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
+const fetchUsers = async () => {
+  setLoading(true)
+  try {
+    const [sRes, cRes] = await Promise.all([
+      api.get('/users/students'),
+      api.get('/users/counsellors'),
+    ])
+    setStudents(sRes.data)
+    setCounsellors(cRes.data)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => { fetchUsers() }, [])
 
