@@ -8,12 +8,15 @@ export class EmailService {
 
 constructor() {
   this.transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  family: 4, // force IPv4
+});
 
   // Verify connection on startup
   this.transporter.verify((error, success) => {
