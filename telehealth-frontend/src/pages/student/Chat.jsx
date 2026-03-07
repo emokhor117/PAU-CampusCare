@@ -7,9 +7,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faComments, faPaperPlane, faSpinner, faPlus,
   faCircleDot, faLock, faCalendarDays, faVideo,
-  faArrowLeft, faBars
+  faArrowLeft, faBars, faXmark
 } from '@fortawesome/free-solid-svg-icons'
-import pauLogo from '../../assets/images/pau logo.png'
 
 // ── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
@@ -156,7 +155,7 @@ export default function StudentChat() {
   const [showFeedback, setShowFeedback]           = useState(false)
   const [showAppointment, setShowAppointment]     = useState(false)
   const [feedbackSessionId, setFeedbackSessionId] = useState(null)
-  const [showSessionList, setShowSessionList]     = useState(false) // mobile toggle
+  const [showSessionList, setShowSessionList]     = useState(false)
 
   const messagesEndRef = useRef(null)
   const pollRef        = useRef(null)
@@ -196,7 +195,7 @@ export default function StudentChat() {
     setActiveSession(session)
     setMessages([])
     setError('')
-    setShowSessionList(false) // close mobile panel
+    setShowSessionList(false)
     if (['ACTIVE', 'CLOSED', 'ESCALATED'].includes(session.status)) {
       await loadMessages(session.session_id)
       if (session.status === 'ACTIVE') startPolling(session.session_id)
@@ -320,12 +319,19 @@ export default function StudentChat() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <h2 className="text-sm font-bold text-gray-800">My Sessions</h2>
-        <button onClick={handleStartSession} disabled={starting} title="Start new session"
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#003D8F] text-white hover:bg-[#1A5CB8] transition cursor-pointer disabled:opacity-60">
-          {starting
-            ? <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
-            : <FontAwesomeIcon icon={faPlus} className="text-xs" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleStartSession} disabled={starting} title="Start new session"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#003D8F] text-white hover:bg-[#1A5CB8] transition cursor-pointer disabled:opacity-60">
+            {starting
+              ? <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
+              : <FontAwesomeIcon icon={faPlus} className="text-xs" />}
+          </button>
+          {/* Close button — mobile only */}
+          <button onClick={() => setShowSessionList(false)}
+            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition cursor-pointer">
+            <FontAwesomeIcon icon={faXmark} className="text-sm" />
+          </button>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto">
         {loadingSessions ? (
@@ -369,197 +375,198 @@ export default function StudentChat() {
   )
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Desktop sidebar */}
-      <div className="hidden md:block">
-        <StudentSidebar active="/student/chat" />
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+
+      {/* ── StudentSidebar handles ALL navigation (desktop + mobile drawer) ── */}
+      <StudentSidebar active="/student/chat" />
+
+      {/* ── Desktop sessions list ─────────────────────────────────────────── */}
+      <div className="hidden md:flex w-72 bg-white border-r border-gray-100 flex-col shrink-0">
+        <SessionsList />
       </div>
 
-      <div className="flex-1 flex overflow-hidden" style={{ height: '100vh' }}>
+      {/* ── Mobile sessions drawer ────────────────────────────────────────── */}
+      {showSessionList && (
+        <>
+          <div className="md:hidden fixed inset-0 z-40 bg-black/40" onClick={() => setShowSessionList(false)} />
+          <div className="md:hidden fixed top-0 left-0 z-50 w-72 h-full bg-white shadow-xl flex flex-col">
+            <SessionsList />
+          </div>
+        </>
+      )}
 
-        {/* Desktop sessions list */}
-        <div className="hidden md:flex w-72 bg-white border-r border-gray-100 flex-col shrink-0">
-          <SessionsList />
+      {/* ── Main chat area ────────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+
+        {/* Mobile sub-header (below the StudentSidebar top bar) */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-2.5 bg-white border-b border-gray-100 shrink-0">
+          <button onClick={() => setShowSessionList(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer">
+            <FontAwesomeIcon icon={faComments} />
+            <span>Sessions</span>
+          </button>
+          {activeSession && (
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs font-medium text-gray-600">Session #{activeSession.session_id}</span>
+              <StatusBadge status={activeSession.status} />
+            </div>
+          )}
         </div>
 
-        {/* Mobile sessions drawer */}
-        {showSessionList && (
-          <div className="md:hidden fixed inset-0 z-40 flex">
-            <div className="w-72 bg-white h-full shadow-xl flex flex-col">
-              <SessionsList />
-            </div>
-            <div className="flex-1 bg-black/40" onClick={() => setShowSessionList(false)} />
-          </div>
-        )}
-
-        {/* Chat panel */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-
-          {/* Mobile top bar */}
-          <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-[#003D8F]">
-            <button onClick={() => setShowSessionList(true)} className="text-white cursor-pointer">
-              <FontAwesomeIcon icon={faBars} />
-            </button>
-            <img src={pauLogo} alt="PAU" className="w-6" />
-            <span className="text-white text-sm font-semibold flex-1">CampusCare</span>
-            {activeSession && (
-              <button onClick={() => { setActiveSession(null); clearInterval(pollRef.current) }}
-                className="text-white/70 cursor-pointer">
-                <FontAwesomeIcon icon={faArrowLeft} />
+        {!activeSession ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+            <FontAwesomeIcon icon={faComments} className="text-gray-200 text-5xl mb-4" />
+            <p className="text-gray-500 font-medium">Select a session to view messages</p>
+            <p className="text-sm text-gray-400 mt-1">Or start a new session to speak with a counsellor</p>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setShowSessionList(true)}
+                className="md:hidden px-5 py-2.5 border border-[#003D8F] text-[#003D8F] text-sm font-semibold rounded-lg transition cursor-pointer">
+                View Sessions
               </button>
-            )}
-          </div>
-
-          {!activeSession ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-              <FontAwesomeIcon icon={faComments} className="text-gray-200 text-5xl mb-4" />
-              <p className="text-gray-500 font-medium">Select a session to view messages</p>
-              <p className="text-sm text-gray-400 mt-1">Or start a new session to speak with a counsellor</p>
               <button onClick={handleStartSession} disabled={starting}
-                className="mt-5 px-5 py-2.5 bg-[#003D8F] text-white text-sm font-semibold rounded-lg hover:bg-[#1A5CB8] transition cursor-pointer disabled:opacity-60">
+                className="px-5 py-2.5 bg-[#003D8F] text-white text-sm font-semibold rounded-lg hover:bg-[#1A5CB8] transition cursor-pointer disabled:opacity-60">
                 {starting ? 'Starting...' : 'Start New Session'}
               </button>
             </div>
-          ) : (
-            <>
-              {/* Chat header */}
-              <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-white border-b border-gray-100 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                    activeSession.status === 'ACTIVE'    ? 'bg-green-400' :
-                    activeSession.status === 'PENDING'   ? 'bg-yellow-400' :
-                    activeSession.status === 'ESCALATED' ? 'bg-red-400' : 'bg-gray-300'
-                  }`} />
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">Session #{activeSession.session_id}</p>
-                    <p className="text-xs text-gray-400 hidden sm:block">
-                      {activeSession.status === 'PENDING'   ? 'Waiting for a counsellor...' :
-                       activeSession.status === 'ACTIVE'    ? 'Session in progress' :
-                       activeSession.status === 'CLOSED'    ? 'Session closed' : 'Session escalated'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Action buttons — consolidated */}
-                <div className="flex items-center gap-2">
-                  {activeSession.status === 'ACTIVE' && (
-                    <>
-                      <button onClick={handleStartCall}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer">
-                        <FontAwesomeIcon icon={faVideo} />
-                        <span className="hidden sm:inline">Call</span>
-                      </button>
-                      <button onClick={() => setShowAppointment(true)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer">
-                        <FontAwesomeIcon icon={faCalendarDays} />
-                        <span className="hidden sm:inline">Appt</span>
-                      </button>
-                      <button onClick={handleCloseSession} disabled={closing}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 transition cursor-pointer disabled:opacity-60">
-                        {closing ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : 'Close'}
-                      </button>
-                    </>
-                  )}
-                  {activeSession.status === 'CLOSED' && (
-                    <button onClick={() => { setFeedbackSessionId(activeSession.session_id); setShowFeedback(true) }}
-                      className="px-3 py-2 rounded-lg bg-[#003D8F] text-white text-xs font-semibold cursor-pointer">
-                      Feedback
-                    </button>
-                  )}
-                  <StatusBadge status={activeSession.status} />
-                </div>
-              </div>
-
-              {/* Incoming call banner */}
-              {incomingCall && (
-                <div className="mx-4 md:mx-6 mt-3 px-4 py-3 rounded-lg bg-green-50 border border-green-200 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-green-700 text-sm">
-                    <FontAwesomeIcon icon={faVideo} className="animate-pulse shrink-0" />
-                    <span className="font-semibold text-xs md:text-sm">Call in progress — your counsellor has started a call</span>
-                  </div>
-                  <button onClick={() => navigate(`/call/${activeSession.session_id}?type=${incomingCall}`)}
-                    className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg shrink-0 cursor-pointer">
-                    Join
-                  </button>
-                </div>
-              )}
-
-              {/* Error bar */}
-              {error && (
-                <div className={`mx-4 md:mx-6 mt-3 px-4 py-2.5 rounded-lg text-xs ${
-                  error.startsWith('✓')
-                    ? 'bg-green-50 border border-green-200 text-green-600'
-                    : 'bg-red-50 border border-red-200 text-red-600'
-                }`}>{error}</div>
-              )}
-
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 flex flex-col gap-3">
-                {activeSession.status === 'PENDING' && (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
-                    <div className="w-12 h-12 rounded-full bg-yellow-50 border border-yellow-200 flex items-center justify-center mb-3">
-                      <FontAwesomeIcon icon={faCircleDot} className="text-yellow-500 animate-pulse" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-600">Waiting for a counsellor</p>
-                    <p className="text-xs text-gray-400 mt-1 max-w-xs">Your session request has been submitted.</p>
-                  </div>
-                )}
-                {loadingMessages && (
-                  <div className="flex items-center justify-center h-32">
-                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-gray-300 text-xl" />
-                  </div>
-                )}
-                {!loadingMessages && messages.map(msg => {
-                  const isStudent = msg.sender_type === 'STUDENT'
-                  return (
-                    <div key={msg.message_id} className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[75%] md:max-w-md px-4 py-2.5 rounded-2xl text-sm ${
-                        isStudent
-                          ? 'bg-[#003D8F] text-white rounded-br-sm'
-                          : 'bg-white border border-gray-100 text-gray-700 rounded-bl-sm shadow-sm'
-                      }`}>
-                        <p className="leading-relaxed">{msg.message_content}</p>
-                        <p className={`text-xs mt-1 ${isStudent ? 'text-white/60' : 'text-gray-400'}`}>
-                          {new Date(msg.sent_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
-                {!loadingMessages && messages.length === 0 && activeSession.status === 'ACTIVE' && (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
-                    <FontAwesomeIcon icon={faLock} className="text-gray-200 text-3xl mb-3" />
-                    <p className="text-sm text-gray-400">Session accepted — start the conversation and keep it respectful</p>
-                    <p className="text-xs text-gray-300 mt-1">Messages are end-to-end encrypted</p>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Message input */}
-              {activeSession.status === 'ACTIVE' && (
-                <div className="px-4 md:px-6 py-4 bg-white border-t border-gray-100 shrink-0">
-                  <div className="flex items-center gap-3">
-                    <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                      placeholder="Type a message..."
-                      className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 focus:outline-none focus:border-[#003D8F] focus:bg-white transition" />
-                    <button onClick={handleSend} disabled={sending || !newMessage.trim()}
-                      className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#003D8F] text-white hover:bg-[#1A5CB8] transition disabled:opacity-40 cursor-pointer shrink-0">
-                      {sending
-                        ? <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
-                        : <FontAwesomeIcon icon={faPaperPlane} className="text-sm" />}
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-300 mt-2 flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faLock} />
-                    Messages are encrypted with AES-256
+          </div>
+        ) : (
+          <>
+            {/* Chat header */}
+            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-white border-b border-gray-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                  activeSession.status === 'ACTIVE'    ? 'bg-green-400' :
+                  activeSession.status === 'PENDING'   ? 'bg-yellow-400' :
+                  activeSession.status === 'ESCALATED' ? 'bg-red-400' : 'bg-gray-300'
+                }`} />
+                <div>
+                  <p className="text-sm font-bold text-gray-800">Session #{activeSession.session_id}</p>
+                  <p className="text-xs text-gray-400 hidden sm:block">
+                    {activeSession.status === 'PENDING'   ? 'Waiting for a counsellor...' :
+                     activeSession.status === 'ACTIVE'    ? 'Session in progress' :
+                     activeSession.status === 'CLOSED'    ? 'Session closed' : 'Session escalated'}
                   </p>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {activeSession.status === 'ACTIVE' && (
+                  <>
+                    <button onClick={handleStartCall}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer">
+                      <FontAwesomeIcon icon={faVideo} />
+                      <span className="hidden sm:inline">Call</span>
+                    </button>
+                    <button onClick={() => setShowAppointment(true)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-[#003D8F] hover:text-[#003D8F] transition cursor-pointer">
+                      <FontAwesomeIcon icon={faCalendarDays} />
+                      <span className="hidden sm:inline">Appt</span>
+                    </button>
+                    <button onClick={handleCloseSession} disabled={closing}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 transition cursor-pointer disabled:opacity-60">
+                      {closing ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : 'Close'}
+                    </button>
+                  </>
+                )}
+                {activeSession.status === 'CLOSED' && (
+                  <button onClick={() => { setFeedbackSessionId(activeSession.session_id); setShowFeedback(true) }}
+                    className="px-3 py-2 rounded-lg bg-[#003D8F] text-white text-xs font-semibold cursor-pointer">
+                    Feedback
+                  </button>
+                )}
+                <StatusBadge status={activeSession.status} />
+              </div>
+            </div>
+
+            {/* Incoming call banner */}
+            {incomingCall && (
+              <div className="mx-4 md:mx-6 mt-3 px-4 py-3 rounded-lg bg-green-50 border border-green-200 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-green-700 text-sm">
+                  <FontAwesomeIcon icon={faVideo} className="animate-pulse shrink-0" />
+                  <span className="font-semibold text-xs md:text-sm">Call in progress — your counsellor has started a call</span>
+                </div>
+                <button onClick={() => navigate(`/call/${activeSession.session_id}?type=${incomingCall}`)}
+                  className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg shrink-0 cursor-pointer">
+                  Join
+                </button>
+              </div>
+            )}
+
+            {/* Error bar */}
+            {error && (
+              <div className={`mx-4 md:mx-6 mt-3 px-4 py-2.5 rounded-lg text-xs ${
+                error.startsWith('✓')
+                  ? 'bg-green-50 border border-green-200 text-green-600'
+                  : 'bg-red-50 border border-red-200 text-red-600'
+              }`}>{error}</div>
+            )}
+
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 flex flex-col gap-3">
+              {activeSession.status === 'PENDING' && (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="w-12 h-12 rounded-full bg-yellow-50 border border-yellow-200 flex items-center justify-center mb-3">
+                    <FontAwesomeIcon icon={faCircleDot} className="text-yellow-500 animate-pulse" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">Waiting for a counsellor</p>
+                  <p className="text-xs text-gray-400 mt-1 max-w-xs">Your session request has been submitted.</p>
+                </div>
               )}
-            </>
-          )}
-        </div>
+              {loadingMessages && (
+                <div className="flex items-center justify-center h-32">
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin text-gray-300 text-xl" />
+                </div>
+              )}
+              {!loadingMessages && messages.map(msg => {
+                const isStudent = msg.sender_type === 'STUDENT'
+                return (
+                  <div key={msg.message_id} className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[75%] md:max-w-md px-4 py-2.5 rounded-2xl text-sm ${
+                      isStudent
+                        ? 'bg-[#003D8F] text-white rounded-br-sm'
+                        : 'bg-white border border-gray-100 text-gray-700 rounded-bl-sm shadow-sm'
+                    }`}>
+                      <p className="leading-relaxed">{msg.message_content}</p>
+                      <p className={`text-xs mt-1 ${isStudent ? 'text-white/60' : 'text-gray-400'}`}>
+                        {new Date(msg.sent_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+              {!loadingMessages && messages.length === 0 && activeSession.status === 'ACTIVE' && (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <FontAwesomeIcon icon={faLock} className="text-gray-200 text-3xl mb-3" />
+                  <p className="text-sm text-gray-400">Session accepted — start the conversation</p>
+                  <p className="text-xs text-gray-300 mt-1">Messages are end-to-end encrypted</p>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message input */}
+            {activeSession.status === 'ACTIVE' && (
+              <div className="px-4 md:px-6 py-4 bg-white border-t border-gray-100 shrink-0">
+                <div className="flex items-center gap-3">
+                  <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                    placeholder="Type a message..."
+                    className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 focus:outline-none focus:border-[#003D8F] focus:bg-white transition" />
+                  <button onClick={handleSend} disabled={sending || !newMessage.trim()}
+                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#003D8F] text-white hover:bg-[#1A5CB8] transition disabled:opacity-40 cursor-pointer shrink-0">
+                    {sending
+                      ? <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
+                      : <FontAwesomeIcon icon={faPaperPlane} className="text-sm" />}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-300 mt-2 flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={faLock} />
+                  Messages are encrypted with AES-256
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {showFeedback && (

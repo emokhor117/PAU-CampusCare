@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api/axios'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faHouse, faComments, faCalendarDays, faClipboardList,
   faBookOpen, faClockRotateLeft, faRightFromBracket,
-  faTriangleExclamation, faCircleDot, faSpinner,
+  faTriangleExclamation, faSpinner,
   faBars, faXmark, faUser
 } from '@fortawesome/free-solid-svg-icons'
 import pauLogo from '../../assets/images/pau logo.png'
@@ -21,69 +21,135 @@ const NAV = [
   { label: 'History',      icon: faClockRotateLeft,  path: '/student/history' },
 ]
 
-// ── Shared sidebar component (we'll reuse this across student pages) ─────────
+// ── Shared sidebar component ─────────────────────────────────────────────────
 export function StudentSidebar({ active }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/login') }
 
+  const handleNav = (path) => {
+    navigate(path)
+    setMobileOpen(false)
+  }
+
+  const NavLinks = ({ mobile = false }) => (
+    <>
+      <nav className="flex flex-col gap-1">
+        {NAV.map(({ label, icon, path }) => {
+          const isActive = active === path
+          return (
+            <button
+              key={path}
+              onClick={() => mobile ? handleNav(path) : navigate(path)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all cursor-pointer w-full text-left ${
+                isActive
+                  ? 'bg-white/15 text-white font-semibold'
+                  : 'text-white/60 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <FontAwesomeIcon icon={icon} className="w-4 shrink-0" />
+              {(mobile || !collapsed) && <span>{label}</span>}
+            </button>
+          )
+        })}
+      </nav>
+
+      {(mobile || !collapsed) && (
+        <div className="mt-6 p-3 rounded-lg bg-red-500/20 border border-red-400/30">
+          <div className="flex items-center gap-2 mb-1">
+            <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-300 text-xs" />
+            <span className="text-red-300 text-xs font-semibold">Crisis Support</span>
+          </div>
+          <p className="text-white/50 text-xs leading-relaxed">
+            If you're in immediate danger, contact PAU Security or call 112.
+          </p>
+        </div>
+      )}
+    </>
+  )
+
   return (
-    <aside className={`hidden md:flex flex-col justify-between bg-[#003D8F] transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'} min-h-screen p-4`}>
-      {/* Top */}
-      <div>
-        {/* Logo + collapse toggle */}
-        <div className="flex items-center justify-between mb-8">
+    <>
+      {/* ── Desktop Sidebar ───────────────────────────────────────────────── */}
+      <aside className={`hidden md:flex flex-col justify-between bg-[#003D8F] transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'} min-h-screen p-4`}>
+        <div>
+          <div className="flex items-center justify-between mb-8">
+            {!collapsed && (
+              <div className="flex items-center gap-2">
+                <img src={pauLogo} alt="PAU" className="w-8" />
+                <span className="text-white font-semibold text-sm">CampusCare</span>
+              </div>
+            )}
+            <button onClick={() => setCollapsed(!collapsed)} className="text-white/50 hover:text-white transition cursor-pointer ml-auto">
+              <FontAwesomeIcon icon={collapsed ? faBars : faXmark} />
+            </button>
+          </div>
+          <NavLinks />
+        </div>
+
+        <div>
           {!collapsed && (
+            <div className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg bg-white/5">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <FontAwesomeIcon icon={faUser} className="text-white text-xs" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-white text-xs font-semibold truncate">{user?.identifier || 'Student'}</p>
+                <p className="text-white/40 text-xs capitalize">{user?.role?.toLowerCase()}</p>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/10 hover:text-white transition cursor-pointer w-full ${collapsed ? 'justify-center' : ''}`}
+          >
+            <FontAwesomeIcon icon={faRightFromBracket} className="w-4 shrink-0" />
+            {!collapsed && <span>Sign Out</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Mobile Top Bar ────────────────────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#003D8F] px-4 py-3 flex items-center gap-3 shadow-md">
+  <button onClick={() => setMobileOpen(true)}
+    className="text-white p-1.5 rounded-lg hover:bg-white/10 transition">
+    <FontAwesomeIcon icon={faBars} className="text-lg" />
+  </button>
+  <div className="flex items-center gap-2">
+    <img src={pauLogo} alt="PAU" className="w-7" />
+    <span className="text-white font-semibold text-sm">CampusCare</span>
+  </div>
+</div>
+
+      {/* ── Mobile Backdrop ───────────────────────────────────────────────── */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile Drawer ─────────────────────────────────────────────────── */}
+      <div className={`md:hidden fixed top-0 left-0 z-50 h-full w-72 bg-[#003D8F] p-5 flex flex-col justify-between transform transition-transform duration-300 ease-in-out ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div>
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
               <img src={pauLogo} alt="PAU" className="w-8" />
               <span className="text-white font-semibold text-sm">CampusCare</span>
             </div>
-          )}
-          <button onClick={() => setCollapsed(!collapsed)} className="text-white/50 hover:text-white transition cursor-pointer ml-auto">
-            <FontAwesomeIcon icon={collapsed ? faBars : faXmark} />
-          </button>
+            <button onClick={() => setMobileOpen(false)} className="text-white/50 hover:text-white transition p-1">
+              <FontAwesomeIcon icon={faXmark} />
+            </button>
+          </div>
+          <NavLinks mobile />
         </div>
 
-        {/* Nav links */}
-        <nav className="flex flex-col gap-1">
-          {NAV.map(({ label, icon, path }) => {
-            const isActive = active === path
-            return (
-              <button
-                key={path}
-                onClick={() => navigate(path)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all cursor-pointer w-full text-left ${
-                  isActive
-                    ? 'bg-white/15 text-white font-semibold'
-                    : 'text-white/60 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <FontAwesomeIcon icon={icon} className="w-4 shrink-0" />
-                {!collapsed && <span>{label}</span>}
-              </button>
-            )
-          })}
-        </nav>
-
-        {/* Crisis support button */}
-        {!collapsed && (
-          <div className="mt-6 p-3 rounded-lg bg-red-500/20 border border-red-400/30">
-            <div className="flex items-center gap-2 mb-1">
-              <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-300 text-xs" />
-              <span className="text-red-300 text-xs font-semibold">Crisis Support</span>
-            </div>
-            <p className="text-white/50 text-xs leading-relaxed">
-              If you're in immediate danger, contact PAU Security or call 112.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Bottom — user info + logout */}
-      <div>
-        {!collapsed && (
+        <div>
           <div className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg bg-white/5">
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
               <FontAwesomeIcon icon={faUser} className="text-white text-xs" />
@@ -93,23 +159,26 @@ export function StudentSidebar({ active }) {
               <p className="text-white/40 text-xs capitalize">{user?.role?.toLowerCase()}</p>
             </div>
           </div>
-        )}
-        <button
-          onClick={handleLogout}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/10 hover:text-white transition cursor-pointer w-full ${collapsed ? 'justify-center' : ''}`}
-        >
-          <FontAwesomeIcon icon={faRightFromBracket} className="w-4 shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
-        </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/10 hover:text-white transition cursor-pointer w-full"
+          >
+            <FontAwesomeIcon icon={faRightFromBracket} className="w-4 shrink-0" />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </div>
-    </aside>
+
+      {/* ── Mobile spacer (prevents content hiding behind fixed top bar) ─── */}
+      {/* <div className="md:hidden h-[52px] w-full shrink-0" /> */}
+    </>
   )
 }
 
 // ── Stat card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, color }) {
   return (
-    <div className={`bg-white rounded-xl p-5 border border-gray-100 shadow-sm`}>
+    <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
       <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">{label}</p>
       <p className={`text-3xl font-bold ${color}`}>{value ?? '—'}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
@@ -144,7 +213,6 @@ export default function StudentDashboard() {
   const [error, setError]               = useState('')
   const [starting, setStarting]         = useState(false)
 
-  // ── Fetch all dashboard data ───────────────────────────────────────────────
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -165,7 +233,6 @@ export default function StudentDashboard() {
     fetchAll()
   }, [])
 
-  // ── Start a new session ───────────────────────────────────────────────────
   const handleStartSession = async () => {
     setStarting(true)
     try {
@@ -177,20 +244,17 @@ export default function StudentDashboard() {
     }
   }
 
-  // ── Derived stats ─────────────────────────────────────────────────────────
-  const activeSessions    = sessions.filter(s => s.status === 'ACTIVE').length
-  const pendingSessions   = sessions.filter(s => s.status === 'PENDING').length
-  const latestAssessment  = assessments[0] ?? null
-  const upcomingAppt      = appointments.find(a => a.status === 'SCHEDULED') ?? null
-  const recentSessions    = sessions.slice(0, 5)
+  const activeSessions   = sessions.filter(s => s.status === 'ACTIVE').length
+  const pendingSessions  = sessions.filter(s => s.status === 'PENDING').length
+  const latestAssessment = assessments[0] ?? null
+  const upcomingAppt     = appointments.find(a => a.status === 'SCHEDULED') ?? null
+  const recentSessions   = sessions.slice(0, 5)
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <StudentSidebar active="/student/dashboard" />
-
-      {/* ── Main content ── */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
-
+  <StudentSidebar active="/student/dashboard" />
+  <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+    <div className="md:hidden h-[52px]" />
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -225,20 +289,10 @@ export default function StudentDashboard() {
           </div>
         ) : (
           <>
-            {/* ── Stat cards ── */}
+            {/* Stat cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatCard
-                label="Active Sessions"
-                value={activeSessions}
-                sub="Currently in progress"
-                color="text-green-600"
-              />
-              <StatCard
-                label="Pending Sessions"
-                value={pendingSessions}
-                sub="Awaiting counsellor"
-                color="text-yellow-500"
-              />
+              <StatCard label="Active Sessions"  value={activeSessions}  sub="Currently in progress"  color="text-green-600" />
+              <StatCard label="Pending Sessions" value={pendingSessions} sub="Awaiting counsellor"    color="text-yellow-500" />
               <StatCard
                 label="Assessments"
                 value={assessments.length}
@@ -253,17 +307,14 @@ export default function StudentDashboard() {
               />
             </div>
 
-            {/* ── Two column layout ── */}
+            {/* Two column layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              {/* Recent sessions — 2/3 width */}
+              {/* Recent sessions */}
               <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                   <h2 className="text-sm font-semibold text-gray-700">Recent Sessions</h2>
-                  <button
-                    onClick={() => navigate('/student/chat')}
-                    className="text-xs text-[#003D8F] hover:underline cursor-pointer"
-                  >
+                  <button onClick={() => navigate('/student/chat')} className="text-xs text-[#003D8F] hover:underline cursor-pointer">
                     View all
                   </button>
                 </div>
@@ -296,9 +347,7 @@ export default function StudentDashboard() {
                             session.status === 'ESCALATED' ? 'bg-red-400' : 'bg-gray-300'
                           }`} />
                           <div>
-                            <p className="text-sm text-gray-700 font-medium">
-                              Session #{session.session_id}
-                            </p>
+                            <p className="text-sm text-gray-700 font-medium">Session #{session.session_id}</p>
                             <p className="text-xs text-gray-400">
                               {new Date(session.started_at).toLocaleDateString('en-GB', {
                                 day: 'numeric', month: 'short', year: 'numeric'
@@ -318,17 +367,14 @@ export default function StudentDashboard() {
                 )}
               </div>
 
-              {/* Right column — assessment + appointment */}
+              {/* Right column */}
               <div className="flex flex-col gap-6">
 
                 {/* Latest assessment */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <h2 className="text-sm font-semibold text-gray-700">Latest Assessment</h2>
-                    <button
-                      onClick={() => navigate('/student/assessment')}
-                      className="text-xs text-[#003D8F] hover:underline cursor-pointer"
-                    >
+                    <button onClick={() => navigate('/student/assessment')} className="text-xs text-[#003D8F] hover:underline cursor-pointer">
                       Take one
                     </button>
                   </div>
@@ -381,10 +427,7 @@ export default function StudentDashboard() {
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <h2 className="text-sm font-semibold text-gray-700">Next Appointment</h2>
-                    <button
-                      onClick={() => navigate('/student/appointments')}
-                      className="text-xs text-[#003D8F] hover:underline cursor-pointer"
-                    >
+                    <button onClick={() => navigate('/student/appointments')} className="text-xs text-[#003D8F] hover:underline cursor-pointer">
                       View all
                     </button>
                   </div>

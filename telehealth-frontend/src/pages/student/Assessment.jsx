@@ -94,6 +94,7 @@ export default function StudentAssessment() {
       <StudentSidebar active="/student/assessment" />
 
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        <div className="md:hidden h-[52px]" />
 
         {/* ── Intro ── */}
         {step === 'intro' && (

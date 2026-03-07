@@ -78,6 +78,7 @@ export default function StudentHistory() {
     <div className="flex min-h-screen bg-gray-50">
       <StudentSidebar active="/student/history" />
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        <div className="md:hidden h-[52px]" />
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-800">Session History</h1>
           <p className="text-sm text-gray-400 mt-0.5">All your past and current sessions</p>
