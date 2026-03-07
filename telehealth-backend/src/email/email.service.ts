@@ -8,20 +8,22 @@ export class EmailService {
 
 constructor() {
   this.transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  family: 4, // force IPv4
-});
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    tls:{
+        rejectUnauthorized: false,
+    }, 
+  } as nodemailer.TransportOptions);
 
   // Verify connection on startup
   this.transporter.verify((error, success) => {
     if (error) {
-      this.logger.error('Email transporter failed to connect:', error.message);
+      this.logger.error('Email transporter failed to connect:', (error as Error).message);
     } else {
       this.logger.log(`Email transporter ready — sending as ${process.env.EMAIL_USER}`);
     }
