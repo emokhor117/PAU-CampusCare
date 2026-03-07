@@ -1,6 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 
 export interface CreateStudentDto {
   matric_number: string;
@@ -19,9 +20,12 @@ export interface CreateCounsellorDto {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
-  // ─── Existing Methods ─────────────────────────────────────────────────────
+  // ── Existing Methods ──────────────────────────────────────────────────────
 
   async findByIdentifier(identifier: string) {
     return this.prisma.user.findUnique({
@@ -33,10 +37,7 @@ export class UsersService {
   async updatePassword(user_id: number, newHash: string) {
     return this.prisma.user.update({
       where: { user_id },
-      data: {
-        password_hash: newHash,
-        first_login: false,
-      },
+      data: { password_hash: newHash, first_login: false },
     });
   }
 
@@ -52,22 +53,20 @@ export class UsersService {
     });
   }
 
-  // ─── Admin: Create Student ────────────────────────────────────────────────
+  // ── Admin: Create Student ─────────────────────────────────────────────────
 
   async createStudent(dto: CreateStudentDto) {
     const existingIdentifier = await this.prisma.user.findUnique({
       where: { identifier: dto.matric_number },
     });
-    if (existingIdentifier) {
+    if (existingIdentifier)
       throw new ConflictException('A student with this matriculation number already exists');
-    }
 
     const existingEmail = await this.prisma.student.findUnique({
       where: { email: dto.email },
     });
-    if (existingEmail) {
+    if (existingEmail)
       throw new ConflictException('A student with this email already exists');
-    }
 
     const password_hash = await bcrypt.hash(dto.password, 10);
 
@@ -91,29 +90,36 @@ export class UsersService {
         data: { user_id: newUser.user_id, display_name: alias },
       });
 
-      return newUser;
+      return { user_id: newUser.user_id, alias };
     });
 
     await this.prisma.logAction(user.user_id, 'Student account created by admin');
+
+    // Send credentials email (non-blocking)
+    this.emailService.sendStudentCredentials({
+      to: dto.email,
+      matric_number: dto.matric_number,
+      password: dto.password,
+      display_name: user.alias,
+    }).catch(err => console.error('Failed to send student credentials email:', err));
+
     return { message: 'Student created successfully', user_id: user.user_id };
   }
 
-  // ─── Admin: Create Counsellor ─────────────────────────────────────────────
+  // ── Admin: Create Counsellor ──────────────────────────────────────────────
 
   async createCounsellor(dto: CreateCounsellorDto) {
     const existingIdentifier = await this.prisma.user.findUnique({
       where: { identifier: dto.staff_number },
     });
-    if (existingIdentifier) {
+    if (existingIdentifier)
       throw new ConflictException('A staff member with this staff number already exists');
-    }
 
     const existingEmail = await this.prisma.staff.findUnique({
       where: { email: dto.email },
     });
-    if (existingEmail) {
+    if (existingEmail)
       throw new ConflictException('A staff member with this email already exists');
-    }
 
     const password_hash = await bcrypt.hash(dto.password, 10);
 
@@ -136,10 +142,18 @@ export class UsersService {
     });
 
     await this.prisma.logAction(user.user_id, 'Counsellor account created by admin');
+
+    // Send credentials email (non-blocking)
+    this.emailService.sendCounsellorCredentials({
+      to: dto.email,
+      staff_number: dto.staff_number,
+      password: dto.password,
+    }).catch(err => console.error('Failed to send counsellor credentials email:', err));
+
     return { message: 'Counsellor created successfully', user_id: user.user_id };
   }
 
-  // ─── Admin: List Students ─────────────────────────────────────────────────
+  // ── Admin: List Students ──────────────────────────────────────────────────
 
   async findAllStudents() {
     return this.prisma.student.findMany({
@@ -158,7 +172,7 @@ export class UsersService {
     });
   }
 
-  // ─── Admin: List Counsellors ──────────────────────────────────────────────
+  // ── Admin: List Counsellors ───────────────────────────────────────────────
 
   async findAllCounsellors() {
     return this.prisma.staff.findMany({
@@ -177,7 +191,7 @@ export class UsersService {
     });
   }
 
-  // ─── Admin: Toggle Account Status ─────────────────────────────────────────
+  // ── Admin: Toggle Account Status ──────────────────────────────────────────
 
   async setAccountStatus(user_id: number, status: 'ACTIVE' | 'SUSPENDED') {
     return this.prisma.user.update({
