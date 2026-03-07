@@ -13,6 +13,12 @@ export class AuthController {
     return this.authService.login(dto.identifier, dto.password);
   }
 
+@UseGuards(JwtAuthGuard)
+@Get('me')
+getMe(@Req() req) {
+  return req.user;
+}
+
   @UseGuards(JwtAuthGuard)
   @Get('protected')
   getProtected(@Req() req) {

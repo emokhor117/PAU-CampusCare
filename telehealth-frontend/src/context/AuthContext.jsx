@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
       }
       try {
         // Any protected endpoint works — we just need a 200 back
-        await api.get('/sessions/my')
+        await api.get('/auth/me')
         setReady(true)
       } catch (err) {
         // Token is invalid or expired — clear everything

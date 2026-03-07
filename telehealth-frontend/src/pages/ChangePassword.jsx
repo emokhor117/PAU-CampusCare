@@ -83,7 +83,7 @@ export default function ChangePassword() {
             Pan-Atlantic University · Guidance & Counselling Unit
           </p>
           <p className="text-white text-sm mt-8 leading-relaxed max-w-xs">
-            You're logging in for the first time. Please set a new password to protect your account before continuing.
+            You are logging in for the first time, so you would need to set a new password to protect your account before continuing.
           </p>
 
           <div className="flex flex-col gap-4 mt-8">
