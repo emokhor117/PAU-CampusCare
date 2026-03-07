@@ -96,12 +96,16 @@ export class UsersService {
     await this.prisma.logAction(user.user_id, 'Student account created by admin');
 
     // Send credentials email (non-blocking)
-    this.emailService.sendStudentCredentials({
+    try{
+      await this.emailService.sendStudentCredentials({
       to: dto.email,
       matric_number: dto.matric_number,
       password: dto.password,
       display_name: user.alias,
-    }).catch(err => console.error('Failed to send student credentials email:', err));
+    });
+    }catch(err){
+      console.error('Failed to send student credentials email:', err.message);
+    }
 
     return { message: 'Student created successfully', user_id: user.user_id };
   }

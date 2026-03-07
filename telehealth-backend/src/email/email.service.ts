@@ -6,15 +6,24 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(EmailService.name);
 
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-  }
+constructor() {
+  this.transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  // Verify connection on startup
+  this.transporter.verify((error, success) => {
+    if (error) {
+      this.logger.error('Email transporter failed to connect:', error.message);
+    } else {
+      this.logger.log(`Email transporter ready — sending as ${process.env.EMAIL_USER}`);
+    }
+  });
+}
 
   // ── Send new student credentials ──────────────────────────────────────────
   async sendStudentCredentials(opts: {
