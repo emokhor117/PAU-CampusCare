@@ -149,9 +149,9 @@ export class UsersService {
 
     // Send credentials email (non-blocking)
     this.emailService.sendCounsellorCredentials({
-      to: dto.email,
-      staff_number: dto.staff_number,
-      password: dto.password,
+  to: dto.email,
+  staff_number: dto.staff_number,
+  password: dto.password,
     }).catch(err => console.error('Failed to send counsellor credentials email:', err));
 
     return { message: 'Counsellor created successfully', user_id: user.user_id };

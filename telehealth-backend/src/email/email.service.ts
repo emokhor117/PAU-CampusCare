@@ -70,7 +70,7 @@ export class EmailService {
 
 
   // ── Send new counsellor credentials ──────────────────────────────────────
-  async sendCounsellorCredentials(opts: { to: string; matric_number: string; password: string; display_name: string; }) {
+  async sendCounsellorCredentials(opts: { to: string; staff_number: string; password: string; }) {
     try {
       // Use the new transactionalEmails path
       await this.client.transactionalEmails.sendTransacEmail({
@@ -90,15 +90,11 @@ export class EmailService {
             <table style="width: 100%; font-size: 14px;">
               <tr>
                 <td style="color: #94a3b8; padding: 6px 0; width: 140px;">Matriculation No.</td>
-                <td style="color: #1e293b; font-weight: 600;">${opts.matric_number}</td>
+                <td style="color: #1e293b; font-weight: 600;">${opts.staff_number}</td>
               </tr>
               <tr>
                 <td style="color: #94a3b8; padding: 6px 0;">Temporary Password</td>
                 <td style="color: #1e293b; font-weight: 600; font-family: monospace; font-size: 15px;">${opts.password}</td>
-              </tr>
-              <tr>
-                <td style="color: #94a3b8; padding: 6px 0;">Anonymous ID</td>
-                <td style="color: #6366f1; font-weight: 600;">${opts.display_name}</td>
               </tr>
             </table>
           </div>
