@@ -200,6 +200,9 @@ export default function StudentChat() {
       await loadMessages(session.session_id)
       if (session.status === 'ACTIVE') startPolling(session.session_id)
     }
+  if (session.status === 'PENDING') {
+    startPendingPoll(session.session_id)
+  }
   }
 
   const loadMessages = async (sid) => {
@@ -246,6 +249,28 @@ export default function StudentChat() {
       } catch {}
     }, 4000)
   }
+
+  const startPendingPoll = (sid) => {
+  clearInterval(pollRef.current)
+  pollRef.current = setInterval(async () => {
+    try {
+      const res = await api.get('/sessions/my')
+      const updated = res.data.find(s => s.session_id === sid)
+      if (updated) {
+        setSessions(res.data)
+        setActiveSession(updated)
+        if (updated.status === 'ACTIVE') {
+          clearInterval(pollRef.current)
+          await loadMessages(sid)
+          startPolling(sid)
+        }
+        if (updated.status === 'CLOSED' || updated.status === 'ESCALATED') {
+          clearInterval(pollRef.current)
+        }
+      }
+    } catch {}
+  }, 4000)
+}
 
   const handleStartSession = async () => {
     setStarting(true)

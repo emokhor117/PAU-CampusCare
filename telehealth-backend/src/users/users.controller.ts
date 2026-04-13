@@ -7,6 +7,7 @@ import {
   Param,
   ParseIntPipe,
   UseGuards,
+  Delete
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -54,6 +55,11 @@ export class UsersController {
   @Get('students')
   getAllStudents() {
     return this.usersService.findAllStudents();
+  }
+
+  @Delete(':id')
+  deleteUser(@Param('id', ParseIntPipe) id: number) {
+  return this.usersService.deleteUser(id);
   }
 
   // GET /users/counsellors

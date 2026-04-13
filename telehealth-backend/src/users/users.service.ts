@@ -110,6 +110,46 @@ export class UsersService {
     return { message: 'Student created successfully', user_id: user.user_id };
   }
 
+  async deleteUser(user_id: number) {
+  await this.prisma.$transaction(async (tx) => {
+    // 1. Get anon_id for this user (to clean up sessions)
+    const profile = await tx.anonymousProfile.findUnique({ where: { user_id } });
+
+    // 2. If student — delete sessions and all related records
+    if (profile) {
+      const sessions = await tx.session.findMany({
+        where: { anon_id: profile.anon_id },
+      });
+      for (const session of sessions) {
+        await tx.feedback.deleteMany({ where: { session_id: session.session_id } });
+        await tx.appointment.deleteMany({ where: { session_id: session.session_id } });
+        await tx.message.deleteMany({ where: { session_id: session.session_id } });
+        await tx.crisisCase.deleteMany({ where: { session_id: session.session_id } });
+        await tx.sessionNote.deleteMany({ where: { session_id: session.session_id } });
+      }
+      await tx.session.deleteMany({ where: { anon_id: profile.anon_id } });
+      await tx.anonymousProfile.delete({ where: { user_id } });
+    }
+
+    // 3. If counsellor — delete session notes they wrote
+    await tx.sessionNote.deleteMany({ where: { counsellor_id: user_id } });
+
+    // 4. Delete shared records
+    await tx.assessment.deleteMany({ where: { user_id } });
+    await tx.auditLog.deleteMany({ where: { user_id } });
+    await tx.resource.deleteMany({ where: { created_by: user_id } });
+
+    // 5. Delete role-specific profile
+    await tx.student.deleteMany({ where: { user_id } });
+    await tx.staff.deleteMany({ where: { user_id } });
+
+    // 6. Finally delete the user
+    await tx.user.delete({ where: { user_id } });
+  });
+
+  return { message: 'User deleted successfully' };
+}
+
   // ── Admin: Create Counsellor ──────────────────────────────────────────────
 
   async createCounsellor(dto: CreateCounsellorDto) {

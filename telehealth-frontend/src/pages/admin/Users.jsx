@@ -1,51 +1,53 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { AdminSidebar } from './Dashboard'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserPlus, faUsers, faUserGraduate, faUserTie,
   faXmark, faEye, faEyeSlash, faCircleCheck,
   faCircleXmark, faMagnifyingGlass, faShieldHalved,
+  faEllipsisVertical, faTrash, faBan, faCheckCircle,
 } from '@fortawesome/free-solid-svg-icons'
 import api from '../../api/axios'
 
 const DEPARTMENTS = [
   'Computer Science', 'Business Administration', 'Mass Communication',
-  'Law', 'Social Sciences', 'Engineering', 'Humanities',
+  'Economics', 'Finance', 'Mechanical Engineering', 'Electrical Engineering',
 ]
 const LEVELS = ['100', '200', '300', '400', '500']
 const defaultStudentForm = { matric_number: '', email: '', password: '', department: '', level: '' }
 const defaultCounsellorForm = { staff_number: '', email: '', password: '', department: '' }
 
 export default function AdminUsers() {
-  const [activeTab, setActiveTab] = useState('students')
-  const [students, setStudents] = useState([])
-  const [counsellors, setCounsellors] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalRole, setModalRole] = useState('student')
-  const [studentForm, setStudentForm] = useState(defaultStudentForm)
+  const [activeTab, setActiveTab]           = useState('students')
+  const [students, setStudents]             = useState([])
+  const [counsellors, setCounsellors]       = useState([])
+  const [loading, setLoading]               = useState(true)
+  const [search, setSearch]                 = useState('')
+  const [modalOpen, setModalOpen]           = useState(false)
+  const [modalRole, setModalRole]           = useState('student')
+  const [studentForm, setStudentForm]       = useState(defaultStudentForm)
   const [counsellorForm, setCounsellorForm] = useState(defaultCounsellorForm)
-  const [showPassword, setShowPassword] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [formError, setFormError] = useState('')
-  const [formSuccess, setFormSuccess] = useState('')
+  const [showPassword, setShowPassword]     = useState(false)
+  const [submitting, setSubmitting]         = useState(false)
+  const [formError, setFormError]           = useState('')
+  const [formSuccess, setFormSuccess]       = useState('')
+  const [pageError, setPageError]           = useState('')
 
-const fetchUsers = async () => {
-  setLoading(true)
-  try {
-    const [sRes, cRes] = await Promise.all([
-      api.get('/users/students'),
-      api.get('/users/counsellors'),
-    ])
-    setStudents(sRes.data)
-    setCounsellors(cRes.data)
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setLoading(false)
+  const fetchUsers = async () => {
+    setLoading(true)
+    try {
+      const [sRes, cRes] = await Promise.all([
+        api.get('/users/students'),
+        api.get('/users/counsellors'),
+      ])
+      setStudents(sRes.data)
+      setCounsellors(cRes.data)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
   useEffect(() => { fetchUsers() }, [])
 
@@ -94,29 +96,40 @@ const fetchUsers = async () => {
 
   const handleToggleStatus = async (user_id, currentStatus) => {
     try {
-      const endpoint = currentStatus === 'ACTIVE' ? `/users/${user_id}/deactivate` : `/users/${user_id}/activate`
-      await api.patch(endpoint)
+      const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+      await api.patch(`/users/${user_id}/status`, { status: newStatus })
       fetchUsers()
     } catch (e) { console.error(e) }
   }
 
-const filteredStudents = students.filter((s) =>
-  s.matric_number?.toLowerCase().includes(search.toLowerCase()) ||
-  s.email?.toLowerCase().includes(search.toLowerCase()) ||
-  s.department?.toLowerCase().includes(search.toLowerCase())
-)
-const filteredCounsellors = counsellors.filter((c) =>
-  c.staff_number?.toLowerCase().includes(search.toLowerCase()) ||
-  c.email?.toLowerCase().includes(search.toLowerCase()) ||
-  c.department?.toLowerCase().includes(search.toLowerCase())
-)
+  const handleDeleteUser = async (user_id) => {
+    if (!window.confirm('Are you sure? This will permanently delete the user and all their data. This cannot be undone.')) return
+    try {
+      setPageError('')
+      await api.delete(`/users/${user_id}`)
+      fetchUsers()
+    } catch (e) {
+      setPageError(e?.response?.data?.message || 'Failed to delete user.')
+    }
+  }
 
-const allUsers = [...students, ...counsellors]
-const statsCards = [
-  { label: 'Total Students', value: students.length, icon: faUserGraduate, bg: 'bg-blue-50', color: 'text-blue-500', border: 'border-blue-100' },
-  { label: 'Total Counsellors', value: counsellors.length, icon: faUserTie, bg: 'bg-emerald-50', color: 'text-emerald-500', border: 'border-emerald-100' },
-  { label: 'Active Accounts', value: allUsers.filter(u => u.account_status === 'ACTIVE').length, icon: faCircleCheck, bg: 'bg-green-50', color: 'text-green-500', border: 'border-green-100' },
-]
+  const filteredStudents = students.filter((s) =>
+    s.matric_number?.toLowerCase().includes(search.toLowerCase()) ||
+    s.email?.toLowerCase().includes(search.toLowerCase()) ||
+    s.department?.toLowerCase().includes(search.toLowerCase())
+  )
+  const filteredCounsellors = counsellors.filter((c) =>
+    c.staff_number?.toLowerCase().includes(search.toLowerCase()) ||
+    c.email?.toLowerCase().includes(search.toLowerCase()) ||
+    c.department?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const allUsers = [...students, ...counsellors]
+  const statsCards = [
+    { label: 'Total Students',    value: students.length,    icon: faUserGraduate, bg: 'bg-blue-50',    color: 'text-blue-500',    border: 'border-blue-100' },
+    { label: 'Total Counsellors', value: counsellors.length, icon: faUserTie,      bg: 'bg-emerald-50', color: 'text-emerald-500', border: 'border-emerald-100' },
+    { label: 'Active Accounts',   value: allUsers.filter(u => (u.user?.account_status ?? u.account_status) === 'ACTIVE').length, icon: faCircleCheck, bg: 'bg-green-50', color: 'text-green-500', border: 'border-green-100' },
+  ]
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -136,6 +149,13 @@ const statsCards = [
             </button>
           </div>
         </div>
+
+        {pageError && (
+          <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-2">
+            <FontAwesomeIcon icon={faCircleXmark} className="text-xs shrink-0" />
+            {pageError}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {statsCards.map((card) => (
@@ -174,9 +194,9 @@ const statsCards = [
               <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : activeTab === 'students' ? (
-            <StudentTable students={filteredStudents} onToggleStatus={handleToggleStatus} />
+            <StudentTable students={filteredStudents} onToggleStatus={handleToggleStatus} onDelete={handleDeleteUser} />
           ) : (
-            <CounsellorTable counsellors={filteredCounsellors} onToggleStatus={handleToggleStatus} />
+            <CounsellorTable counsellors={filteredCounsellors} onToggleStatus={handleToggleStatus} onDelete={handleDeleteUser} />
           )}
         </div>
       </main>
@@ -193,21 +213,68 @@ const statsCards = [
   )
 }
 
-function StudentTable({ students, onToggleStatus }) {
+// ── Action Menu ───────────────────────────────────────────────────────────────
+function ActionMenu({ status, onToggleStatus, onDelete }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const isActive = status === 'ACTIVE'
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(p => !p)}
+        className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+      >
+        <FontAwesomeIcon icon={faEllipsisVertical} className="text-sm" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 z-20 mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden">
+          <button
+            onClick={() => { onToggleStatus(); setOpen(false) }}
+            className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition cursor-pointer ${
+              isActive ? 'text-orange-500 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'
+            }`}
+          >
+            <FontAwesomeIcon icon={isActive ? faBan : faCheckCircle} className="text-xs" />
+            {isActive ? 'Deactivate' : 'Activate'}
+          </button>
+          <div className="my-1 border-t border-gray-100" />
+          <button
+            onClick={() => { onDelete(); setOpen(false) }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faTrash} className="text-xs" />
+            Delete User
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Tables ────────────────────────────────────────────────────────────────────
+function StudentTable({ students, onToggleStatus, onDelete }) {
   if (students.length === 0) return <EmptyState message="No students found." />
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-gray-50 border-b border-gray-100">
-            {['Matric No.', 'Email', 'Department', 'Level', 'Anon ID', 'Status', 'Action'].map(h => (
-              <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+            {['Matric No.', 'Email', 'Department', 'Level', 'Anon ID', 'Status', ''].map((h, i) => (
+              <th key={i} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50">
           {students.map((s) => (
-            <tr key={s.user_id} className="hover:bg-gray-50 transition-colors">
+            <tr key={s.student_id} className="hover:bg-gray-50 transition-colors">
               <td className="px-5 py-3.5 font-medium text-gray-800">{s.matric_number}</td>
               <td className="px-5 py-3.5 text-gray-600">{s.email}</td>
               <td className="px-5 py-3.5 text-gray-600">{s.department}</td>
@@ -215,11 +282,19 @@ function StudentTable({ students, onToggleStatus }) {
               <td className="px-5 py-3.5">
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-50 text-violet-600 text-xs rounded-full border border-violet-100">
                   <FontAwesomeIcon icon={faShieldHalved} className="text-[10px]" />
-                  {s.display_name ?? '—'}
+                  {s.user?.anonymousProfile?.display_name ?? s.display_name ?? '—'}
                 </span>
               </td>
-              <td className="px-5 py-3.5"><StatusBadge status={s.account_status} /></td>
-              <td className="px-5 py-3.5"><ToggleButton status={s.account_status} onToggle={() => onToggleStatus(s.user_id, s.account_status)} /></td>
+              <td className="px-5 py-3.5">
+                <StatusBadge status={s.user?.account_status ?? s.account_status} />
+              </td>
+              <td className="px-5 py-3.5">
+                <ActionMenu
+                  status={s.user?.account_status ?? s.account_status}
+                  onToggleStatus={() => onToggleStatus(s.user?.user_id ?? s.user_id, s.user?.account_status ?? s.account_status)}
+                  onDelete={() => onDelete(s.user?.user_id ?? s.user_id)}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -228,26 +303,34 @@ function StudentTable({ students, onToggleStatus }) {
   )
 }
 
-function CounsellorTable({ counsellors, onToggleStatus }) {
+function CounsellorTable({ counsellors, onToggleStatus, onDelete }) {
   if (counsellors.length === 0) return <EmptyState message="No counsellors found." />
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-gray-50 border-b border-gray-100">
-            {['Staff No.', 'Email', 'Department', 'Status', 'Action'].map(h => (
-              <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+            {['Staff No.', 'Email', 'Department', 'Status', ''].map((h, i) => (
+              <th key={i} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50">
           {counsellors.map((c) => (
-            <tr key={c.user_id} className="hover:bg-gray-50 transition-colors">
+            <tr key={c.staff_id} className="hover:bg-gray-50 transition-colors">
               <td className="px-5 py-3.5 font-medium text-gray-800">{c.staff_number}</td>
               <td className="px-5 py-3.5 text-gray-600">{c.email}</td>
               <td className="px-5 py-3.5 text-gray-600">{c.department}</td>
-              <td className="px-5 py-3.5"><StatusBadge status={c.account_status} /></td>
-              <td className="px-5 py-3.5"><ToggleButton status={c.account_status} onToggle={() => onToggleStatus(c.user_id, c.account_status)} /></td>
+              <td className="px-5 py-3.5">
+                <StatusBadge status={c.user?.account_status ?? c.account_status} />
+              </td>
+              <td className="px-5 py-3.5">
+                <ActionMenu
+                  status={c.user?.account_status ?? c.account_status}
+                  onToggleStatus={() => onToggleStatus(c.user?.user_id ?? c.user_id, c.user?.account_status ?? c.account_status)}
+                  onDelete={() => onDelete(c.user?.user_id ?? c.user_id)}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -263,16 +346,6 @@ function StatusBadge({ status }) {
       <FontAwesomeIcon icon={isActive ? faCircleCheck : faCircleXmark} className="text-[10px]" />
       {isActive ? 'Active' : 'Inactive'}
     </span>
-  )
-}
-
-function ToggleButton({ status, onToggle }) {
-  const isActive = status === 'ACTIVE'
-  return (
-    <button onClick={onToggle}
-      className={`text-xs px-3 py-1 rounded-md font-medium border transition-colors ${isActive ? 'border-red-200 text-red-500 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}>
-      {isActive ? 'Deactivate' : 'Activate'}
-    </button>
   )
 }
 
