@@ -107,7 +107,7 @@ export default function Login() {
 
             <h2 className="text-3xl font-semibold text-gray-800">Welcome </h2>
             <p className="text-sm text-gray-400 mt-1 mb-8">
-              Sign in to access your counselling portal
+              Sign in to access your counselling portal.
             </p>
 
             {/* Role tabs */}
