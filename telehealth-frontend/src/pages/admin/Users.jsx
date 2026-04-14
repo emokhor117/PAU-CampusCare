@@ -13,6 +13,9 @@ const DEPARTMENTS = [
   'Computer Science', 'Business Administration', 'Mass Communication',
   'Economics', 'Finance', 'Mechanical Engineering', 'Electrical Engineering',
 ]
+const DEPARTMENTS1 = [
+'Guidance & Counselling'
+]
 const LEVELS = ['100', '200', '300', '400', '500']
 const defaultStudentForm = { matric_number: '', email: '', password: '', department: '', level: '' }
 const defaultCounsellorForm = { staff_number: '', email: '', password: '', department: '' }
@@ -396,7 +399,7 @@ function AddUserModal({ role, studentForm, setStudentForm, counsellorForm, setCo
               <InputField label="Staff Number" placeholder="e.g. STF/2024/001" value={counsellorForm.staff_number} onChange={cField('staff_number')} />
               <InputField label="Email Address" type="email" placeholder="counsellor@pau.edu.ng" value={counsellorForm.email} onChange={cField('email')} />
               <PasswordField label="Temporary Password" value={counsellorForm.password} onChange={cField('password')} show={showPassword} onToggle={() => setShowPassword(p => !p)} />
-              <SelectField label="Department" value={counsellorForm.department} onChange={cField('department')} options={DEPARTMENTS} />
+              <SelectField label="Department" value={counsellorForm.department} onChange={cField('department')} options={DEPARTMENTS1} />
             </>
           )}
 
