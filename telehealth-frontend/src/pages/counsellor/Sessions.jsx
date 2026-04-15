@@ -4,9 +4,9 @@ import api from '../../api/axios'
 import { CounsellorSidebar } from './Dashboard'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faSpinner, faComments, faCircleDot, faInbox
+  faSpinner, faComments, faCircleDot, faInbox,
+  faNoteSticky, faXmark
 } from '@fortawesome/free-solid-svg-icons'
-import pauLogo from '../../assets/images/pau logo.png'
 
 function StatusBadge({ status }) {
   const map = {
@@ -22,15 +22,99 @@ function StatusBadge({ status }) {
   )
 }
 
+// ── Notes Modal ───────────────────────────────────────────────────────────────
+function NotesModal({ sessionId, onClose }) {
+  const [notes, setNotes]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]   = useState('')
+
+  useEffect(() => {
+    api.get(`/sessions/${sessionId}/notes`)
+      .then(res => setNotes(res.data))
+      .catch(() => setError('Failed to load notes.'))
+      .finally(() => setLoading(false))
+  }, [sessionId])
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-[#E8F0FC] flex items-center justify-center">
+              <FontAwesomeIcon icon={faNoteSticky} className="text-[#1a3a5c] text-sm" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-800">Session Notes</h3>
+              <p className="text-xs text-gray-400">Session #{sessionId}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <FontAwesomeIcon icon={faSpinner} className="animate-spin text-[#1a3a5c] text-xl" />
+            </div>
+          ) : error ? (
+            <p className="text-sm text-red-500 text-center py-8">{error}</p>
+          ) : notes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <FontAwesomeIcon icon={faNoteSticky} className="text-gray-200 text-3xl mb-3" />
+              <p className="text-sm text-gray-400">No notes recorded for this session</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {notes.map((note, i) => (
+                <div key={note.note_id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-[#1a3a5c]">Note {i + 1}</span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(note.created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric', month: 'short', year: 'numeric',
+                      })} · {new Date(note.created_at).toLocaleTimeString('en-GB', {
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">{note.note_text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 shrink-0">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CounsellorSessions() {
   const navigate = useNavigate()
 
-  const [tab, setTab]             = useState('queue')
-  const [pending, setPending]     = useState([])
+  const [tab, setTab]               = useState('queue')
+  const [pending, setPending]       = useState([])
   const [mySessions, setMySessions] = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [accepting, setAccepting] = useState(null)
-  const [error, setError]         = useState('')
+  const [loading, setLoading]       = useState(true)
+  const [accepting, setAccepting]   = useState(null)
+  const [error, setError]           = useState('')
+  const [notesSession, setNotesSession] = useState(null) // session_id to show notes for
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -66,7 +150,7 @@ export default function CounsellorSessions() {
   const closed    = mySessions.filter(s => s.status === 'CLOSED')
   const escalated = mySessions.filter(s => s.status === 'ESCALATED')
 
-  const Section = ({ title, items, emptyMsg, clickable = true }) => (
+  const Section = ({ title, items, emptyMsg, clickable = true, showNotes = false }) => (
     <div className="mb-8">
       <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">{title}</h2>
       {items.length === 0 ? (
@@ -76,14 +160,16 @@ export default function CounsellorSessions() {
           {items.map(session => (
             <div
               key={session.session_id}
-              onClick={() => clickable && navigate(`/counsellor/chat/${session.session_id}`)}
-              className={`flex items-center justify-between px-6 py-4 ${clickable ? 'hover:bg-gray-50 cursor-pointer' : ''} transition`}
+              className="flex items-center justify-between px-6 py-4 transition hover:bg-gray-50"
             >
-              <div className="flex items-center gap-3">
+              <div
+                className={`flex items-center gap-3 flex-1 min-w-0 ${clickable ? 'cursor-pointer' : ''}`}
+                onClick={() => clickable && navigate(`/counsellor/chat/${session.session_id}`)}
+              >
                 <div className="w-9 h-9 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
                   <FontAwesomeIcon icon={faComments} className="text-gray-400 text-xs" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-700">Session #{session.session_id}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     Started: {new Date(session.started_at).toLocaleDateString('en-GB', {
@@ -95,7 +181,18 @@ export default function CounsellorSessions() {
                   </p>
                 </div>
               </div>
-              <StatusBadge status={session.status} />
+              <div className="flex items-center gap-2 shrink-0 ml-3">
+                <StatusBadge status={session.status} />
+                {showNotes && (
+                  <button
+                    onClick={() => setNotesSession(session.session_id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-500 hover:border-[#1a3a5c] hover:text-[#1a3a5c] transition cursor-pointer"
+                  >
+                    <FontAwesomeIcon icon={faNoteSticky} className="text-xs" />
+                    Notes
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -108,8 +205,8 @@ export default function CounsellorSessions() {
       <CounsellorSidebar active="/counsellor/sessions" />
 
       <main className="flex-1 p-6 md:p-10">
+        <div className="md:hidden h-[52px]" />
         <div className="mb-6">
-          <img src={pauLogo} alt="PAU" className="w-8" />
           <h1 className="text-2xl font-bold text-gray-800">Sessions</h1>
           <p className="text-sm text-gray-400 mt-0.5">Manage session requests and your session history</p>
         </div>
@@ -154,7 +251,6 @@ export default function CounsellorSessions() {
             <FontAwesomeIcon icon={faSpinner} className="animate-spin text-[#1a3a5c] text-2xl" />
           </div>
         ) : tab === 'queue' ? (
-          // ── Pending queue ──
           pending.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <FontAwesomeIcon icon={faCircleDot} className="text-gray-200 text-4xl mb-3" />
@@ -204,7 +300,6 @@ export default function CounsellorSessions() {
             </div>
           )
         ) : (
-          // ── My sessions ──
           mySessions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <FontAwesomeIcon icon={faComments} className="text-gray-200 text-4xl mb-3" />
@@ -212,13 +307,20 @@ export default function CounsellorSessions() {
             </div>
           ) : (
             <>
-              <Section title="Active"    items={active}    emptyMsg="No active sessions"    />
-              <Section title="Escalated" items={escalated} emptyMsg="No escalated sessions" />
-              <Section title="Closed"    items={closed}    emptyMsg="No closed sessions yet" />
+              <Section title="Active"    items={active}    emptyMsg="No active sessions"     clickable={true}  showNotes={false} />
+              <Section title="Escalated" items={escalated} emptyMsg="No escalated sessions"  clickable={false} showNotes={true}  />
+              <Section title="Closed"    items={closed}    emptyMsg="No closed sessions yet"  clickable={false} showNotes={true}  />
             </>
           )
         )}
       </main>
+
+      {notesSession && (
+        <NotesModal
+          sessionId={notesSession}
+          onClose={() => setNotesSession(null)}
+        />
+      )}
     </div>
   )
 }

@@ -20,61 +20,139 @@ export function CounsellorSidebar({ active }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <aside className={`hidden md:flex flex-col justify-between bg-[#1a3a5c] transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'} min-h-screen p-4`}>
-      <div>
-        <div className="flex items-center justify-between mb-8">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <img src={pauLogo} alt="PAU" className="w-8" />
-              <span className="text-white font-semibold text-sm">CampusCare</span>
-            </div>
-          )}
-          <button onClick={() => setCollapsed(!collapsed)} className="text-white/50 hover:text-white transition cursor-pointer ml-auto">
-            <FontAwesomeIcon icon={collapsed ? faBars : faXmark} />
-          </button>
+    <>
+      {/* ── Mobile top bar ─────────────────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#1a3a5c] px-4 py-3 flex items-center gap-3 shadow-md">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faBars} className="text-lg" />
+        </button>
+        <div className="flex items-center gap-2">
+          <img src={pauLogo} alt="PAU" className="w-7" />
+          <span className="text-white font-semibold text-sm">CampusCare</span>
         </div>
-
-        <nav className="flex flex-col gap-1">
-          {NAV.map(({ label, icon, path }) => (
-            <button
-              key={path}
-              onClick={() => navigate(path)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition cursor-pointer w-full text-left ${
-                active === path
-                  ? 'bg-white/15 text-white font-semibold'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <FontAwesomeIcon icon={icon} className="w-4 shrink-0" />
-              {!collapsed && <span>{label}</span>}
-            </button>
-          ))}
-        </nav>
       </div>
 
-      <div>
-        {!collapsed && (
-          <div className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg bg-white/5">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-              <FontAwesomeIcon icon={faUser} className="text-white text-xs" />
+      {/* ── Mobile drawer ──────────────────────────────────────────────── */}
+      {mobileOpen && (
+        <>
+          <div
+            className="md:hidden fixed inset-0 z-40 bg-black/40"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="md:hidden fixed top-0 left-0 z-50 w-72 h-full bg-[#1a3a5c] flex flex-col p-4 shadow-xl">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-2">
+                <img src={pauLogo} alt="PAU" className="w-8" />
+                <span className="text-white font-semibold text-sm">CampusCare</span>
+              </div>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="text-white/50 hover:text-white transition cursor-pointer"
+              >
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
             </div>
-            <div className="overflow-hidden">
-              <p className="text-white text-xs font-semibold truncate">{user?.identifier || 'Counsellor'}</p>
-              <p className="text-white/40 text-xs">Counsellor</p>
+
+            <nav className="flex flex-col gap-1">
+              {NAV.map(({ label, icon, path }) => (
+                <button
+                  key={path}
+                  onClick={() => { navigate(path); setMobileOpen(false) }}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition cursor-pointer w-full text-left ${
+                    active === path
+                      ? 'bg-white/15 text-white font-semibold'
+                      : 'text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <FontAwesomeIcon icon={icon} className="w-4 shrink-0" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </nav>
+
+            <div className="mt-auto">
+              <div className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg bg-white/5">
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <FontAwesomeIcon icon={faUser} className="text-white text-xs" />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-white text-xs font-semibold truncate">{user?.identifier || 'Counsellor'}</p>
+                  <p className="text-white/40 text-xs">Counsellor</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { logout(); navigate('/login') }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/10 hover:text-white transition cursor-pointer w-full"
+              >
+                <FontAwesomeIcon icon={faRightFromBracket} className="w-4 shrink-0" />
+                <span>Sign Out</span>
+              </button>
             </div>
           </div>
-        )}
-        <button
-          onClick={() => { logout(); navigate('/login') }}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/10 hover:text-white transition cursor-pointer w-full ${collapsed ? 'justify-center' : ''}`}
-        >
-          <FontAwesomeIcon icon={faRightFromBracket} className="w-4 shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
-        </button>
-      </div>
-    </aside>
+        </>
+      )}
+
+      {/* ── Desktop sidebar ────────────────────────────────────────────── */}
+      <aside className={`hidden md:flex flex-col justify-between bg-[#1a3a5c] transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'} min-h-screen p-4`}>
+        <div>
+          <div className="flex items-center justify-between mb-8">
+            {!collapsed && (
+              <div className="flex items-center gap-2">
+                <img src={pauLogo} alt="PAU" className="w-8" />
+                <span className="text-white font-semibold text-sm">CampusCare</span>
+              </div>
+            )}
+            <button onClick={() => setCollapsed(!collapsed)} className="text-white/50 hover:text-white transition cursor-pointer ml-auto">
+              <FontAwesomeIcon icon={collapsed ? faBars : faXmark} />
+            </button>
+          </div>
+
+          <nav className="flex flex-col gap-1">
+            {NAV.map(({ label, icon, path }) => (
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition cursor-pointer w-full text-left ${
+                  active === path
+                    ? 'bg-white/15 text-white font-semibold'
+                    : 'text-white/60 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <FontAwesomeIcon icon={icon} className="w-4 shrink-0" />
+                {!collapsed && <span>{label}</span>}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div>
+          {!collapsed && (
+            <div className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg bg-white/5">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <FontAwesomeIcon icon={faUser} className="text-white text-xs" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-white text-xs font-semibold truncate">{user?.identifier || 'Counsellor'}</p>
+                <p className="text-white/40 text-xs">Counsellor</p>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={() => { logout(); navigate('/login') }}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/10 hover:text-white transition cursor-pointer w-full ${collapsed ? 'justify-center' : ''}`}
+          >
+            <FontAwesomeIcon icon={faRightFromBracket} className="w-4 shrink-0" />
+            {!collapsed && <span>Sign Out</span>}
+          </button>
+        </div>
+      </aside>
+    </>
   )
 }
 
@@ -104,11 +182,11 @@ function StatusBadge({ status }) {
 
 export default function CounsellorDashboard() {
   const navigate = useNavigate()
-  const [pending, setPending]         = useState([])
+  const [pending, setPending]           = useState([])
   const [appointments, setAppointments] = useState([])
-  const [loading, setLoading]         = useState(true)
-  const [accepting, setAccepting]     = useState(null)
-  const [error, setError]             = useState('')
+  const [loading, setLoading]           = useState(true)
+  const [accepting, setAccepting]       = useState(null)
+  const [error, setError]               = useState('')
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -147,15 +225,14 @@ export default function CounsellorDashboard() {
       <CounsellorSidebar active="/counsellor/dashboard" />
 
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        <div className="md:hidden h-[52px]" />
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
           <p className="text-sm text-gray-400 mt-0.5">Counsellor overview</p>
         </div>
 
         {error && (
-          <div className="mb-6 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-            {error}
-          </div>
+          <div className="mb-6 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{error}</div>
         )}
 
         {loading ? (
@@ -164,27 +241,21 @@ export default function CounsellorDashboard() {
           </div>
         ) : (
           <>
-            {/* Stat cards */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              <StatCard label="Pending Queue"    value={pending.length}      sub="Awaiting acceptance"    color="text-yellow-500" />
-              <StatCard label="Upcoming Appts"   value={upcomingAppts.length} sub="Scheduled appointments" color="text-[#1a3a5c]"  />
-              <StatCard label="Total Appts"      value={appointments.length} sub="All time"               color="text-purple-600" />
+              <StatCard label="Pending Queue"   value={pending.length}       sub="Awaiting acceptance"    color="text-yellow-500" />
+              <StatCard label="Upcoming Appts"  value={upcomingAppts.length} sub="Scheduled appointments" color="text-[#1a3a5c]"  />
+              <StatCard label="Total Appts"     value={appointments.length}  sub="All time"               color="text-purple-600" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
               {/* Pending sessions */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                   <h2 className="text-sm font-semibold text-gray-700">Pending Session Requests</h2>
-                  <button
-                    onClick={() => navigate('/counsellor/sessions')}
-                    className="text-xs text-[#1a3a5c] hover:underline cursor-pointer"
-                  >
+                  <button onClick={() => navigate('/counsellor/sessions')} className="text-xs text-[#1a3a5c] hover:underline cursor-pointer">
                     View all
                   </button>
                 </div>
-
                 {pending.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-14 text-center">
                     <FontAwesomeIcon icon={faCircleDot} className="text-gray-200 text-3xl mb-2" />
@@ -205,9 +276,7 @@ export default function CounsellorDashboard() {
                             )}
                           </div>
                           <p className="text-xs text-gray-400 mt-1">
-                            {new Date(session.started_at).toLocaleDateString('en-GB', {
-                              day: 'numeric', month: 'short', year: 'numeric'
-                            })}
+                            {new Date(session.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </p>
                         </div>
                         <button
@@ -230,14 +299,10 @@ export default function CounsellorDashboard() {
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                   <h2 className="text-sm font-semibold text-gray-700">Upcoming Appointments</h2>
-                  <button
-                    onClick={() => navigate('/counsellor/appointments')}
-                    className="text-xs text-[#1a3a5c] hover:underline cursor-pointer"
-                  >
+                  <button onClick={() => navigate('/counsellor/appointments')} className="text-xs text-[#1a3a5c] hover:underline cursor-pointer">
                     View all
                   </button>
                 </div>
-
                 {upcomingAppts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-14 text-center">
                     <FontAwesomeIcon icon={faCalendarDays} className="text-gray-200 text-3xl mb-2" />
@@ -250,11 +315,7 @@ export default function CounsellorDashboard() {
                         <div>
                           <p className="text-sm font-medium text-gray-700">{appt.appointment_type.replace('_', ' ')}</p>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            {new Date(appt.scheduled_time).toLocaleDateString('en-GB', {
-                              day: 'numeric', month: 'short', year: 'numeric'
-                            })} at {new Date(appt.scheduled_time).toLocaleTimeString('en-GB', {
-                              hour: '2-digit', minute: '2-digit'
-                            })}
+                            {new Date(appt.scheduled_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(appt.scheduled_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                         <span className="text-xs px-2.5 py-1 rounded-full bg-green-50 text-green-600 border border-green-200 font-medium">
