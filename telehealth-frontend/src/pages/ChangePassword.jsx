@@ -11,6 +11,8 @@ import {
   faCircleCheck,
   faCircleXmark,
 } from '@fortawesome/free-solid-svg-icons'
+import pauLogo2 from '../assets/images/Screenshot 2026-03-03 100015.png'
+
 
 export default function ChangePassword() {
   const { user, logout } = useAuth()
@@ -111,7 +113,7 @@ export default function ChangePassword() {
 
           {/* Mobile logo */}
           <div className="flex md:hidden items-center gap-3 mb-8">
-            <img src="/src/assets/images/pau logo2.png" alt="PAU Logo" className="w-10" />
+            <img src={pauLogo2} alt="PAU" className="w-8" />
             <span className="text-[#003D8F] font-semibold text-lg">PAU CampusCare</span>
           </div>
 
