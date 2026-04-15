@@ -11,7 +11,7 @@ import {
   faCircleCheck,
   faCircleXmark,
 } from '@fortawesome/free-solid-svg-icons'
-import pauLogo2 from '../assets/images/Screenshot 2026-03-03 100015.png'
+import pauLogo2 from '../assets/images/Screenshot 2026-03-03 090859.png'
 
 
 export default function ChangePassword() {
