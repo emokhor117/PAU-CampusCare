@@ -86,6 +86,16 @@ addNote(
     note_text,
   );
 }
+
+// Get notes for a session
+@UseGuards(JwtAuthGuard)
+@Roles(Role.COUNSELLOR)
+@Get(':id/notes')
+getSessionNotes(@Param('id') id: string, @Req() req) {
+  return this.sessionsService.getSessionNotes(Number(id), req.user.sub);
+}
+
+
 //  crisis endpoint
 @UseGuards(JwtAuthGuard)
 @Roles(Role.COUNSELLOR)

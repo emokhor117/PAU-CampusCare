@@ -106,6 +106,18 @@ export class SessionsService {
     });
   }
 
+  async getSessionNotes(session_id: number, counsellor_id: number) {
+  // verify this counsellor owns the session
+  const session = await this.prisma.session.findUnique({ where: { session_id } });
+  if (!session) throw new ForbiddenException('Session not found');
+  if (session.counsellor_id !== counsellor_id) throw new ForbiddenException('Not your session');
+
+  return this.prisma.sessionNote.findMany({
+    where: { session_id },
+    orderBy: { created_at: 'asc' },
+  });
+}
+
   async flagCrisis(session_id: number, risk_reason: string, action_taken: string) {
     const session = await this.prisma.session.findUnique({ where: { session_id } });
     if (!session) throw new Error('Session not found');
