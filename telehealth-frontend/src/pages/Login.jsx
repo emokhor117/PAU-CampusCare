@@ -135,13 +135,13 @@ export default function Login() {
             {/* Identifier */}
             <div className="mb-4">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">
-                {role === 'student' ? 'Matriculation Number' : 'Staff ID / Email'}
+                {role === 'student' ? 'Matriculation Number' : 'Staff ID'}
               </label>
               <input
                 type="text"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
-                placeholder={role === 'student' ? 'e.g. PAU/CSC/2021/001' : 'Enter your ID'}
+                placeholder={role === 'student' ? 'Enter your matriculation number' : 'Enter your ID'}
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-800 focus:outline-none focus:border-[#003D8F] focus:bg-white transition-all"
               />
             </div>
