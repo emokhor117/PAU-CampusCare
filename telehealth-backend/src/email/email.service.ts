@@ -84,12 +84,12 @@ export class EmailService {
           </div>
           <h2 style="color: #1e293b; font-size: 18px; margin-bottom: 8px;">Welcome to CampusCare</h2>
           <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
-            Your student account has been created. Use the credentials below to log in for the first time. You will be asked to change your password on first login.
+            Your counsellor account has been created. Use the credentials below to log in for the first time. You will be asked to change your password on first login.
           </p>
           <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
             <table style="width: 100%; font-size: 14px;">
               <tr>
-                <td style="color: #94a3b8; padding: 6px 0; width: 140px;">Matriculation No.</td>
+                <td style="color: #94a3b8; padding: 6px 0; width: 140px;">Staff No.</td>
                 <td style="color: #1e293b; font-weight: 600;">${opts.staff_number}</td>
               </tr>
               <tr>
